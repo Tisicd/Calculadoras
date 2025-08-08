@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+
+/* Ajuste para que el visor no se estreche demasiado */
+#stepsSection {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+/* En small screens, permite scroll horizontal de la matriz si es muy ancha */
+@media (max-width: 640px) {
+  #stepMatrix {
+    display: block;
+    overflow-x: auto;
+  }
+}

@@ -1,6 +1,51 @@
 {
+  "name": "solvmath-calculators",
+  "version": "2.0.0",
+  "description": "Calculadora matemática avanzada con SymPy + MathJS + LLM local",
+  "homepage": "https://github.com/Crash0015/Calculadoras#readme",
+  "bugs": {
+    "url": "https://github.com/Crash0015/Calculadoras/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Crash0015/Calculadoras.git"
+  },
+  "license": "ISC",
+  "author": "Crash0015",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "python -m http.server 8001",
+    "start:backend": "python start_backend.py",
+    "start:docker": "cd backend && docker-compose up --build",
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./src/output.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"npm run build:css\" \"npm run start\" \"npm run start:backend\""
+  },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.11",
+    "mathjs": "^14.8.0",
     "tailwindcss": "^4.1.11"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "mathematics",
+    "calculator",
+    "sympy",
+    "mathjs",
+    "fastapi",
+    "llm",
+    "education",
+    "step-by-step",
+    "matrices",
+    "functions",
+    "derivatives",
+    "integrals"
+  ],
+  "engines": {
+    "node": ">=14.0.0",
+    "python": ">=3.8.0"
   }
 }

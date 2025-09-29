@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Funciones - SolvMath</title>
+    <style>
+        /* Estilos específicos para la calculadora de funciones */
+        .function-examples {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .example-category {
+            margin-bottom: 15px;
+        }
+        
+        .example-category h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .example-function {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            margin: 4px 8px 4px 0;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .example-function:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .step-card {
+            background: white;
+            border-left: 4px solid #3b82f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateX(4px);
+        }
+        
+        .step-number {
+            background: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online { background-color: #10b981; }
+        .status-offline { background-color: #ef4444; }
+        .status-checking { background-color: #f59e0b; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .operation-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .operation-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .operation-button.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .math-preview {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: #1e293b;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .math-preview.valid {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .math-preview.invalid {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body>
+    <div id="functionsContainer">
+        <!-- El contenido se carga dinámicamente aquí -->
+    </div>
+
+    <!-- Ejemplos de funciones -->
+    <div class="function-examples">
+        <h3 class="text-lg font-semibold mb-4">
+            <i data-lucide="lightbulb" class="w-5 h-5 inline-block mr-2"></i>
+            Ejemplos de funciones para probar
+        </h3>
+        
+         <div class="example-category">
+             <h4>Polinomios</h4>
+             <span class="example-function" onclick="setFunction('x^2 + 2*x + 1')">x² + 2x + 1</span>
+             <span class="example-function" onclick="setFunction('3*x^3 - 2*x^2 + x - 5')">3x³ - 2x² + x - 5</span>
+             <span class="example-function" onclick="setFunction('x^4 - 16')">x⁴ - 16</span>
+             <span class="example-function" onclick="quickSolve('x^2 + 2*x + 1', 'derive')" style="background: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255, 255, 255, 0.5);">
+                 <i data-lucide="zap" class="w-3 h-3 inline-block mr-1"></i>Derivar x²+2x+1
+             </span>
+         </div>
+        
+         <div class="example-category">
+             <h4>Trigonométricas</h4>
+             <span class="example-function" onclick="setFunction('sin(x)')">sin(x)</span>
+             <span class="example-function" onclick="setFunction('cos(x)^2')">cos²(x)</span>
+             <span class="example-function" onclick="setFunction('sin(x)*cos(x)')">sin(x)cos(x)</span>
+             <span class="example-function" onclick="setFunction('tan(x)')">tan(x)</span>
+             <span class="example-function" onclick="quickSolve('sin(x)', 'derive')" style="background: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255, 255, 255, 0.5);">
+                 <i data-lucide="zap" class="w-3 h-3 inline-block mr-1"></i>Derivar sin(x)
+             </span>
+         </div>
+        
+         <div class="example-category">
+             <h4>Exponenciales</h4>
+             <span class="example-function" onclick="setFunction('exp(x)')">eˣ</span>
+             <span class="example-function" onclick="setFunction('2^x')">2ˣ</span>
+             <span class="example-function" onclick="setFunction('x*exp(x)')">xeˣ</span>
+             <span class="example-function" onclick="setFunction('exp(-x^2)')">e^(-x²)</span>
+             <span class="example-function" onclick="quickSolve('exp(x)', 'integrate')" style="background: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255, 255, 255, 0.5);">
+                 <i data-lucide="zap" class="w-3 h-3 inline-block mr-1"></i>Integrar eˣ
+             </span>
+         </div>
+        
+         <div class="example-category">
+             <h4>Logarítmicas</h4>
+             <span class="example-function" onclick="setFunction('log(x)')">ln(x)</span>
+             <span class="example-function" onclick="setFunction('x*log(x)')">x ln(x)</span>
+             <span class="example-function" onclick="setFunction('log(x^2 + 1)')">ln(x² + 1)</span>
+             <span class="example-function" onclick="quickSolve('log(x)', 'derive')" style="background: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255, 255, 255, 0.5);">
+                 <i data-lucide="zap" class="w-3 h-3 inline-block mr-1"></i>Derivar ln(x)
+             </span>
+         </div>
+        
+         <div class="example-category">
+             <h4>Racionales</h4>
+             <span class="example-function" onclick="setFunction('1/(x^2 + 1)')">1/(x² + 1)</span>
+             <span class="example-function" onclick="setFunction('x/(x^2 - 4)')">x/(x² - 4)</span>
+             <span class="example-function" onclick="setFunction('(x^2 + 1)/(x - 1)')">(x² + 1)/(x - 1)</span>
+             <span class="example-function" onclick="quickSolve('1/(x^2 + 1)', 'integrate')" style="background: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255, 255, 255, 0.5);">
+                 <i data-lucide="zap" class="w-3 h-3 inline-block mr-1"></i>Integrar 1/(x²+1)
+             </span>
+         </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Función para establecer función desde ejemplos - debe estar en el contexto global
+        window.setFunction = function(func) {
+            console.log('setFunction llamada con:', func);
+            const input = document.getElementById('functionInput');
+            if (input) {
+                input.value = func;
+                // Disparar evento de parseo
+                const parseBtn = document.getElementById('parseFunctionBtn');
+                if (parseBtn) {
+                    parseBtn.click();
+                }
+            } else {
+                console.warn('Input de función no encontrado');
+            }
+        };
+        
+         // También definir en el contexto global para compatibilidad
+         setFunction = window.setFunction;
+         
+         // Función para resolver ejercicios con un clic
+         window.quickSolve = function(func, operation) {
+             console.log('quickSolve llamada con:', func, operation);
+             
+             // Establecer la función
+             setFunction(func);
+             
+             // Esperar un momento para que se procese la función
+             setTimeout(() => {
+                 // Seleccionar la operación
+                 const operationBtn = document.querySelector(`[data-operation="${operation}"]`);
+                 if (operationBtn) {
+                     operationBtn.click();
+                     
+                     // Esperar un momento y luego resolver
+                     setTimeout(() => {
+                         const calculateBtn = document.getElementById('calculateBtn');
+                         if (calculateBtn && !calculateBtn.disabled) {
+                             calculateBtn.click();
+                             showNotification(`Resolviendo: ${func} (${operation})`, 'success');
+                         } else {
+                             showNotification('No se pudo resolver. Verifica que el backend esté funcionando.', 'error');
+                         }
+                     }, 500);
+                 } else {
+                     showNotification('Operación no encontrada', 'error');
+                 }
+             }, 300);
+         };
+        
+        // Función para mostrar loading en botones
+        function showLoading(buttonId, text = 'Cargando...') {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.innerHTML = `<div class="loading-spinner"></div> ${text}`;
+                btn.disabled = true;
+            }
+        }
+        
+        function hideLoading(buttonId, originalText) {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        // Función para animar entrada de resultados
+        function animateResult() {
+            const resultCard = document.querySelector('.result-card');
+            if (resultCard) {
+                resultCard.style.opacity = '0';
+                resultCard.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    resultCard.style.transition = 'all 0.5s ease';
+                    resultCard.style.opacity = '1';
+                    resultCard.style.transform = 'translateY(0)';
+                }, 100);
+            }
+        }
+        
+        // Función para mostrar notificaciones
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i data-lucide="${type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 mr-2"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Renderizar iconos
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Función para verificar conectividad
+        async function checkConnectivity() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            if (!statusIndicator || !statusText) return;
+            
+            statusIndicator.className = 'status-indicator status-checking';
+            statusText.textContent = 'Verificando conexión...';
+            
+            try {
+                // Verificar backend
+                const backendResponse = await fetch('http://localhost:8000/health');
+                const backendOk = backendResponse.ok;
+                
+                // Verificar LLM (opcional)
+                let llmOk = false;
+                try {
+                    const llmResponse = await fetch('http://localhost:11434/api/tags');
+                    llmOk = llmResponse.ok;
+                } catch (e) {
+                    // LLM no disponible, pero no es crítico
+                }
+                
+                if (backendOk) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = `Backend: ✓${llmOk ? ' | LLM: ✓' : ' | LLM: ✗'}`;
+                } else {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = 'Backend: ✗ | LLM: ✗';
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'Servicios no disponibles';
+            }
+        }
+        
+        // Verificar conectividad cada 30 segundos
+        setInterval(checkConnectivity, 30000);
+        
+        // Verificación inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkConnectivity, 1000);
+        });
+    </script>
+</body>
+</html>
+

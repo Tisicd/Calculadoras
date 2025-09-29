@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico MathJS - SolvMath</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico MathJS - SolvMath</h1>
+        
+        <div id="status-container">
+            <div class="info">
+                <strong>Verificando MathJS...</strong>
+            </div>
+        </div>
+        
+        <div id="test-results"></div>
+        
+        <button onclick="runDiagnostics()">🔄 Ejecutar Diagnóstico</button>
+        <button onclick="testMathJS()">🧮 Probar MathJS</button>
+        <button onclick="clearResults()">🗑️ Limpiar</button>
+        
+        <h2>📋 Información del Sistema</h2>
+        <div id="system-info"></div>
+    </div>
+
+    <!-- MathJS -->
+    <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
+    
+    <script>
+        function addStatus(message, type = 'info') {
+            const container = document.getElementById('status-container');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            container.appendChild(div);
+        }
+        
+        function addResult(title, content) {
+            const container = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <h3>${title}</h3>
+                <pre>${content}</pre>
+            `;
+            container.appendChild(div);
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('status-container').innerHTML = '<div class="info"><strong>Listo para diagnóstico...</strong></div>';
+        }
+        
+        function runDiagnostics() {
+            clearResults();
+            addStatus('🔍 Iniciando diagnóstico completo...', 'info');
+            
+            // 1. Verificar MathJS
+            setTimeout(() => {
+                if (typeof math !== 'undefined') {
+                    addStatus('✅ MathJS está disponible', 'success');
+                    addResult('MathJS Info', `Versión: ${math.version || 'Desconocida'}\nTipo: ${typeof math}\nParse: ${typeof math.parse}\nEvaluate: ${typeof math.evaluate}`);
+                } else {
+                    addStatus('❌ MathJS NO está disponible', 'error');
+                }
+            }, 100);
+            
+            // 2. Verificar funciones específicas
+            setTimeout(() => {
+                if (typeof math !== 'undefined') {
+                    try {
+                        const testExpr = math.parse('x^2 + 2*x + 1');
+                        addStatus('✅ math.parse() funciona correctamente', 'success');
+                        addResult('Parse Test', `Expresión: x^2 + 2*x + 1\nResultado: ${testExpr.toString()}`);
+                    } catch (e) {
+                        addStatus('❌ math.parse() falló: ' + e.message, 'error');
+                    }
+                    
+                    try {
+                        const testEval = math.evaluate('2 + 3 * 4');
+                        addStatus('✅ math.evaluate() funciona correctamente', 'success');
+                        addResult('Evaluate Test', `Expresión: 2 + 3 * 4\nResultado: ${testEval}`);
+                    } catch (e) {
+                        addStatus('❌ math.evaluate() falló: ' + e.message, 'error');
+                    }
+                }
+            }, 200);
+            
+            // 3. Verificar red
+            setTimeout(() => {
+                addStatus('🌐 Verificando conectividad de red...', 'info');
+                
+                // Probar diferentes CDNs
+                const cdns = [
+                    'https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js',
+                    'https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js'
+                ];
+                
+                cdns.forEach((cdn, index) => {
+                    fetch(cdn, { method: 'HEAD' })
+                        .then(response => {
+                            if (response.ok) {
+                                addStatus(`✅ CDN ${index + 1} accesible: ${cdn}`, 'success');
+                            } else {
+                                addStatus(`⚠️ CDN ${index + 1} no accesible: ${response.status}`, 'warning');
+                            }
+                        })
+                        .catch(error => {
+                            addStatus(`❌ CDN ${index + 1} error: ${error.message}`, 'error');
+                        });
+                });
+            }, 300);
+            
+            // 4. Información del sistema
+            setTimeout(() => {
+                const systemInfo = `
+Navegador: ${navigator.userAgent}
+Plataforma: ${navigator.platform}
+Idioma: ${navigator.language}
+Conexión: ${navigator.connection ? navigator.connection.effectiveType : 'Desconocida'}
+Cookies habilitadas: ${navigator.cookieEnabled}
+JavaScript habilitado: ${typeof window !== 'undefined'}
+LocalStorage disponible: ${typeof localStorage !== 'undefined'}
+                `;
+                
+                addResult('Información del Sistema', systemInfo);
+            }, 400);
+        }
+        
+        function testMathJS() {
+            if (typeof math === 'undefined') {
+                addStatus('❌ MathJS no está disponible para pruebas', 'error');
+                return;
+            }
+            
+            addStatus('🧮 Ejecutando pruebas de MathJS...', 'info');
+            
+            const tests = [
+                { expr: '2 + 3', expected: 5 },
+                { expr: 'x^2 + 2*x + 1', type: 'parse' },
+                { expr: 'sin(pi/2)', expected: 1 },
+                { expr: 'log(e)', expected: 1 },
+                { expr: 'sqrt(16)', expected: 4 }
+            ];
+            
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    try {
+                        let result;
+                        if (test.type === 'parse') {
+                            result = math.parse(test.expr).toString();
+                            addStatus(`✅ Test ${index + 1}: ${test.expr} → ${result}`, 'success');
+                        } else {
+                            result = math.evaluate(test.expr);
+                            const success = Math.abs(result - test.expected) < 0.0001;
+                            addStatus(`${success ? '✅' : '❌'} Test ${index + 1}: ${test.expr} → ${result} (esperado: ${test.expected})`, 
+                                    success ? 'success' : 'error');
+                        }
+                    } catch (e) {
+                        addStatus(`❌ Test ${index + 1} falló: ${test.expr} - ${e.message}`, 'error');
+                    }
+                }, index * 100);
+            });
+        }
+        
+        // Ejecutar diagnóstico automático al cargar
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnostics, 500);
+        });
+    </script>
+</body>
+</html>

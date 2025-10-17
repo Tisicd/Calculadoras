@@ -69,6 +69,12 @@ def parse_function(func_str: str, variable: str = 'x') -> sp.Expr:
     Maneja conversiones comunes para compatibilidad
     """
     try:
+        if not func_str or not func_str.strip():
+            raise ValueError("La función no puede estar vacía")
+            
+        # Limpiar la entrada
+        func_str = func_str.strip()
+        
         # Reemplazos comunes para compatibilidad con MathJS
         replacements = {
             '^': '**',  # Potencia
@@ -81,26 +87,49 @@ def parse_function(func_str: str, variable: str = 'x') -> sp.Expr:
             'sqrt': 'sqrt',
             'abs': 'abs',
             'pi': 'pi',
-            'e': 'E'
+            # NO reemplazar 'e' por 'E' ya que esto afecta exp(x)
+            # 'e': 'E'  # Comentado porque causa problemas con exp(x)
         }
         
-        # Aplicar reemplazos
+        # Aplicar reemplazos de manera más segura
         processed_func = func_str
         for old, new in replacements.items():
-            processed_func = processed_func.replace(old, new)
+            # Usar regex para reemplazos más precisos
+            import re
+            if old == '^':
+                # Solo reemplazar ^ que estén en contexto de potencia
+                processed_func = re.sub(r'([a-zA-Z0-9\)]+)\^([a-zA-Z0-9\(]+)', r'\1**\2', processed_func)
+            else:
+                processed_func = processed_func.replace(old, new)
+        
+        # Validar caracteres permitidos (básico)
+        allowed_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()., ')
+        if not all(c in allowed_chars for c in processed_func):
+            raise ValueError("La función contiene caracteres no válidos")
         
         # Parsear con SymPy
         expr = sp.sympify(processed_func)
         
-        # Verificar que la variable esté presente
-        if variable not in str(expr.free_symbols):
-            logger.warning(f"Variable '{variable}' no encontrada en la expresión")
+        # Verificar que la expresión sea válida
+        if expr is None:
+            raise ValueError("No se pudo parsear la expresión")
+            
+        # Verificar que la variable esté presente (opcional para constantes)
+        free_symbols = expr.free_symbols
+        if free_symbols and variable not in [str(s) for s in free_symbols]:
+            logger.warning(f"Variable '{variable}' no encontrada en la expresión. Variables encontradas: {[str(s) for s in free_symbols]}")
             
         return expr
         
     except Exception as e:
         logger.error(f"Error parseando función '{func_str}': {e}")
-        raise HTTPException(status_code=400, detail=f"Error parseando función: {str(e)}")
+        # Proporcionar mensajes de error más específicos
+        if "Invalid expression" in str(e):
+            raise HTTPException(status_code=400, detail=f"Expresión inválida: {func_str}")
+        elif "division by zero" in str(e):
+            raise HTTPException(status_code=400, detail="División por cero detectada")
+        else:
+            raise HTTPException(status_code=400, detail=f"Error parseando función: {str(e)}")
 
 def generate_steps(operation: str, expr: sp.Expr, result: sp.Expr, variable: str = 'x') -> List[str]:
     """
@@ -206,7 +235,7 @@ async def derive_function(request: FunctionRequest):
         expr = parse_function(request.function, request.variable)
         
         # Calcular derivada
-        derivative = diff(expr, request.variable)
+        derivative = diff(expr, sp.Symbol(request.variable))
         derivative_simplified = simplify(derivative)
         
         # Generar pasos
@@ -232,35 +261,100 @@ async def integrate_function(request: FunctionRequest):
     try:
         logger.info(f"Integrando función: {request.function}")
         
+        # Validar entrada
+        if not request.function or not request.function.strip():
+            raise HTTPException(status_code=400, detail="La función no puede estar vacía")
+        
         # Parsear función
         expr = parse_function(request.function, request.variable)
         
-        # Calcular integral
-        integral = integrate(expr, request.variable)
+        # Inicializar variables
+        integral = None
+        integral_simplified = None
+        result_str = ""
+        latex_result = None
         
-        # Si la integral no es simbólica, intentar métodos numéricos
-        if integral == expr:
-            # Integral no se puede resolver simbólicamente
-            integral = f"Integral no resuelta simbólicamente: ∫{expr} d{request.variable}"
-            result_str = str(integral)
-        else:
+        # Verificar que la expresión sea integrable
+        if expr.is_number and not expr.is_zero:
+            # Para constantes, la integral es c*x
+            integral = expr * sp.Symbol(request.variable)
             integral_simplified = simplify(integral)
             result_str = str(integral_simplified)
+            latex_result = latex(integral)
+        else:
+            # Calcular integral
+            try:
+                integral = sp.integrate(expr, sp.Symbol(request.variable))
+                
+                # Si la integral no se puede resolver simbólicamente
+                if integral == expr:
+                    # Intentar métodos alternativos
+                    try:
+                        # Para funciones racionales
+                        if expr.is_rational_function():
+                            integral = sp.integrate(expr, sp.Symbol(request.variable))
+                        elif expr.is_polynomial():
+                            # Para polinomios, usar integración directa
+                            integral = sp.integrate(expr, sp.Symbol(request.variable))
+                        else:
+                            # Integral no resuelta simbólicamente
+                            result_str = f"Integral no resuelta simbólicamente: ∫{expr} d{request.variable}"
+                            integral_simplified = result_str
+                            latex_result = None
+                    except Exception as alt_error:
+                        logger.warning(f"Error en método alternativo: {alt_error}")
+                        result_str = f"Integral no resuelta simbólicamente: ∫{expr} d{request.variable}"
+                        integral_simplified = result_str
+                        latex_result = None
+                
+                # Solo procesar si integral es una expresión válida
+                if isinstance(integral, sp.Expr):
+                    integral_simplified = simplify(integral)
+                    result_str = str(integral_simplified)
+                    latex_result = latex(integral)
+                elif isinstance(integral, str):
+                    result_str = integral
+                    integral_simplified = integral
+                    latex_result = None
+                    
+            except Exception as int_error:
+                logger.warning(f"Error específico en integración: {int_error}")
+                # Proporcionar información útil sobre el error
+                if "not implemented" in str(int_error):
+                    result_str = f"Integral no implementada para esta expresión: ∫{expr} d{request.variable}"
+                elif "convergence" in str(int_error):
+                    result_str = f"Problema de convergencia en la integral: ∫{expr} d{request.variable}"
+                elif "division by zero" in str(int_error):
+                    result_str = f"División por cero en la función: {expr}"
+                else:
+                    result_str = f"No se pudo calcular la integral: ∫{expr} d{request.variable}"
+                integral_simplified = result_str
+                latex_result = None
         
         # Generar pasos
-        steps = generate_steps("integrate", expr, integral_simplified if '∫' not in str(integral) else integral, request.variable)
+        steps = generate_steps("integrate", expr, integral_simplified if isinstance(integral_simplified, sp.Expr) else expr, request.variable)
         
         return FunctionResponse(
             operation="integrate",
             function=request.function,
             result=result_str,
             steps=steps,
-            latex_result=latex(integral) if '∫' not in str(integral) else None
+            latex_result=latex_result
         )
         
+    except HTTPException:
+        # Re-lanzar excepciones HTTP
+        raise
     except Exception as e:
         logger.error(f"Error en integración: {e}")
-        raise HTTPException(status_code=500, detail=f"Error en integración: {str(e)}")
+        # Proporcionar mensajes de error más específicos
+        error_msg = str(e)
+        if "division by zero" in error_msg:
+            raise HTTPException(status_code=400, detail="División por cero en la función")
+        elif "invalid" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=f"Función inválida: {request.function}")
+        else:
+            raise HTTPException(status_code=500, detail=f"Error interno en integración: {error_msg}")
 
 @app.post("/function/simplify", response_model=FunctionResponse)
 async def simplify_function(request: FunctionRequest):

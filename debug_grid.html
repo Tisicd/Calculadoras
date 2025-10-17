@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Grid - Símbolos Matemáticos</title>
+    <link href="./src/output.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- MathJS para cálculos numéricos -->
+    <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
+    
+    <style>
+        /* ESTILOS FORZADOS PARA EL GRID */
+        #symbolButtons {
+            display: grid !important;
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 8px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            background: #f0f0f0;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        .symbol-btn {
+            aspect-ratio: 1 !important;
+            min-height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: auto !important;
+            background: #e5e7eb !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            color: #374151 !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+        }
+        
+        .symbol-btn:hover {
+            background: #dbeafe !important;
+            border-color: #3b82f6 !important;
+            transform: scale(1.05) !important;
+        }
+        
+        .symbol-btn:active {
+            transform: scale(0.95) !important;
+        }
+        
+        /* Debug info */
+        .debug-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">
+            🔧 Debug Grid - Símbolos Matemáticos
+        </h1>
+        
+        <!-- Información de debug -->
+        <div class="debug-info">
+            <strong>Debug Info:</strong><br>
+            - CSS Grid: display: grid; grid-template-columns: repeat(5, 1fr)<br>
+            - Gap: 8px<br>
+            - Botones: aspect-ratio: 1; min-height: 40px<br>
+            - Total símbolos: 32<br>
+            - Grid esperado: 5 columnas x ~7 filas
+        </div>
+        
+        <!-- Test del grid -->
+        <div class="bg-white rounded-xl shadow-xl p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Test Grid Directo</h2>
+            
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-600 mb-2">Símbolos matemáticos (Grid forzado)</h4>
+                <div id="symbolButtons">
+                    <!-- Los símbolos se generarán aquí -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test con Tailwind -->
+        <div class="bg-white rounded-xl shadow-xl p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Test con Tailwind</h2>
+            
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-600 mb-2">Símbolos matemáticos (Tailwind)</h4>
+                <div class="grid grid-cols-5 gap-2" id="tailwindGrid">
+                    <!-- Los símbolos se generarán aquí -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Log de debug -->
+        <div class="bg-gray-900 text-green-400 rounded-xl p-6 font-mono text-sm">
+            <h3 class="text-white text-lg font-bold mb-4">Log de Debug:</h3>
+            <div id="debugLog" class="space-y-1 max-h-64 overflow-y-auto">
+                <div>Iniciando debug del grid...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const symbols = [
+            // Operadores básicos
+            { label: '+', value: '+', title: 'Suma' },
+            { label: '−', value: '-', title: 'Resta' },
+            { label: '×', value: '*', title: 'Multiplicación' },
+            { label: '÷', value: '/', title: 'División' },
+            { label: '^', value: '^', title: 'Potencia' },
+            { label: '(', value: '(', title: 'Paréntesis izquierdo' },
+            { label: ')', value: ')', title: 'Paréntesis derecho' },
+            { label: 'x', value: 'x', title: 'Variable x' },
+            
+            // Funciones matemáticas
+            { label: 'sin', value: 'sin(', title: 'Seno' },
+            { label: 'cos', value: 'cos(', title: 'Coseno' },
+            { label: 'tan', value: 'tan(', title: 'Tangente' },
+            { label: 'ln', value: 'log(', title: 'Logaritmo natural' },
+            { label: 'eˣ', value: 'exp(', title: 'Exponencial' },
+            { label: '√', value: 'sqrt(', title: 'Raíz cuadrada' },
+            { label: '|x|', value: 'abs(', title: 'Valor absoluto' },
+            { label: 'π', value: 'pi', title: 'Pi' },
+            
+            // Números
+            { label: '0', value: '0', title: 'Cero' },
+            { label: '1', value: '1', title: 'Uno' },
+            { label: '2', value: '2', title: 'Dos' },
+            { label: '3', value: '3', title: 'Tres' },
+            { label: '4', value: '4', title: 'Cuatro' },
+            { label: '5', value: '5', title: 'Cinco' },
+            { label: '6', value: '6', title: 'Seis' },
+            { label: '7', value: '7', title: 'Siete' },
+            { label: '8', value: '8', title: 'Ocho' },
+            { label: '9', value: '9', title: 'Nueve' },
+            { label: '.', value: '.', title: 'Punto decimal' },
+            { label: 'e', value: 'e', title: 'Número e' }
+        ];
+        
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function createSymbolButton(symbol) {
+            return `
+                <button 
+                    class="symbol-btn" 
+                    data-symbol="${symbol.value}" 
+                    title="${symbol.title}"
+                    onclick="log('Clic en: ${symbol.label}')"
+                >
+                    ${symbol.label}
+                </button>
+            `;
+        }
+        
+        function createTailwindButton(symbol) {
+            return `
+                <button 
+                    class="aspect-square bg-gray-100 hover:bg-indigo-100 active:bg-indigo-200 text-gray-800 font-medium rounded-lg shadow-sm transition-all duration-150 hover:scale-105 flex items-center justify-center text-sm border border-gray-200" 
+                    data-symbol="${symbol.value}" 
+                    title="${symbol.title}"
+                    onclick="log('Tailwind clic en: ${symbol.label}')"
+                >
+                    ${symbol.label}
+                </button>
+            `;
+        }
+        
+        // Inicializar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Página cargada, creando grids...');
+            
+            // Crear grid con CSS forzado
+            const symbolContainer = document.getElementById('symbolButtons');
+            if (symbolContainer) {
+                symbolContainer.innerHTML = symbols.map(createSymbolButton).join('');
+                log(`✅ Grid CSS creado con ${symbols.length} botones`);
+            }
+            
+            // Crear grid con Tailwind
+            const tailwindContainer = document.getElementById('tailwindGrid');
+            if (tailwindContainer) {
+                tailwindContainer.innerHTML = symbols.map(createTailwindButton).join('');
+                log(`✅ Grid Tailwind creado con ${symbols.length} botones`);
+            }
+            
+            // Verificar estilos aplicados
+            setTimeout(() => {
+                const cssContainer = document.getElementById('symbolButtons');
+                const computedStyle = window.getComputedStyle(cssContainer);
+                log(`CSS Grid display: ${computedStyle.display}`);
+                log(`CSS Grid template: ${computedStyle.gridTemplateColumns}`);
+                log(`CSS Grid gap: ${computedStyle.gap}`);
+                
+                const tailwindContainer = document.getElementById('tailwindGrid');
+                const tailwindStyle = window.getComputedStyle(tailwindContainer);
+                log(`Tailwind Grid display: ${tailwindStyle.display}`);
+                log(`Tailwind Grid template: ${tailwindStyle.gridTemplateColumns}`);
+                log(`Tailwind Grid gap: ${tailwindStyle.gap}`);
+            }, 100);
+            
+            // Renderizar iconos
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+        
+        // Función para probar el grid
+        window.testGrid = function() {
+            log('=== TESTING GRID ===');
+            const container = document.getElementById('symbolButtons');
+            if (container) {
+                log(`Container encontrado: ${container.id}`);
+                log(`Display: ${window.getComputedStyle(container).display}`);
+                log(`Grid-template-columns: ${window.getComputedStyle(container).gridTemplateColumns}`);
+                log(`Gap: ${window.getComputedStyle(container).gap}`);
+                log(`Width: ${window.getComputedStyle(container).width}`);
+                
+                const buttons = container.querySelectorAll('.symbol-btn');
+                log(`Botones encontrados: ${buttons.length}`);
+                
+                if (buttons.length > 0) {
+                    const firstBtn = buttons[0];
+                    log(`Primer botón display: ${window.getComputedStyle(firstBtn).display}`);
+                    log(`Primer botón width: ${window.getComputedStyle(firstBtn).width}`);
+                    log(`Primer botón height: ${window.getComputedStyle(firstBtn).height}`);
+                }
+            } else {
+                log('❌ Container no encontrado');
+            }
+        };
+    </script>
+</body>
+</html>

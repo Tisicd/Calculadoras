@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Verificar Cambios</title>
+    <link href="./src/output.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- KaTeX para renderizado matemático -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" integrity="sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- MathJS para cálculos numéricos -->
+    <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">
+            🔍 Debug - Verificar Cambios en Calculadora
+        </h1>
+        
+        <!-- Panel de verificación -->
+        <div class="bg-white rounded-xl shadow-xl p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Verificación de Archivos</h2>
+            
+            <div id="fileStatus" class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium">Archivo functionsCalculator.js:</span>
+                    <span id="fileStatus1" class="px-3 py-1 rounded-full bg-gray-200 text-gray-700">Verificando...</span>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium">KaTeX disponible:</span>
+                    <span id="katexStatus" class="px-3 py-1 rounded-full bg-gray-200 text-gray-700">Verificando...</span>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium">MathJS disponible:</span>
+                    <span id="mathjsStatus" class="px-3 py-1 rounded-full bg-gray-200 text-gray-700">Verificando...</span>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <button onclick="loadCalculator()" class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <i data-lucide="play" class="w-5 h-5 inline-block mr-2"></i>
+                    Cargar Calculadora
+                </button>
+                
+                <button onclick="forceReload()" class="ml-4 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 inline-block mr-2"></i>
+                    Forzar Recarga
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contenedor de la calculadora -->
+        <div id="functionsContainer">
+            <!-- El contenido se carga aquí -->
+        </div>
+        
+        <!-- Log de debug -->
+        <div class="mt-8 bg-gray-900 text-green-400 rounded-xl p-6 font-mono text-sm">
+            <h3 class="text-white text-lg font-bold mb-4">Log de Debug:</h3>
+            <div id="debugLog" class="space-y-1 max-h-64 overflow-y-auto">
+                <div>Iniciando verificación...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus(elementId, status, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = status;
+                element.className = `px-3 py-1 rounded-full ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            }
+        }
+        
+        function checkFileStatus() {
+            log('Verificando archivo functionsCalculator.js...');
+            
+            // Intentar cargar el archivo
+            const script = document.createElement('script');
+            script.src = 'calculators/functionsCalculator.js';
+            script.onload = function() {
+                log('✅ functionsCalculator.js cargado correctamente');
+                updateStatus('fileStatus1', 'Cargado', true);
+                
+                if (typeof window.FunctionsCalculator === 'function') {
+                    log('✅ Clase FunctionsCalculator disponible');
+                } else {
+                    log('❌ Clase FunctionsCalculator no encontrada');
+                    updateStatus('fileStatus1', 'Error: Clase no encontrada', false);
+                }
+            };
+            script.onerror = function() {
+                log('❌ Error cargando functionsCalculator.js');
+                updateStatus('fileStatus1', 'Error de carga', false);
+            };
+            document.head.appendChild(script);
+        }
+        
+        function checkLibraries() {
+            // Verificar KaTeX
+            if (typeof window.katex !== 'undefined') {
+                log('✅ KaTeX disponible');
+                updateStatus('katexStatus', 'Disponible', true);
+            } else {
+                log('❌ KaTeX no disponible');
+                updateStatus('katexStatus', 'No disponible', false);
+            }
+            
+            // Verificar MathJS
+            if (typeof math !== 'undefined') {
+                log('✅ MathJS disponible');
+                updateStatus('mathjsStatus', 'Disponible', true);
+            } else {
+                log('❌ MathJS no disponible');
+                updateStatus('mathjsStatus', 'No disponible', false);
+            }
+        }
+        
+        function loadCalculator() {
+            log('Intentando cargar calculadora...');
+            
+            if (typeof window.FunctionsCalculator === 'function') {
+                log('Inicializando FunctionsCalculator...');
+                
+                try {
+                    const functionsCalc = new window.FunctionsCalculator();
+                    window.functionsCalculator = functionsCalc;
+                    
+                    // Inicializar de forma asíncrona
+                    functionsCalc.init().then(() => {
+                        log('✅ Calculadora inicializada correctamente');
+                    }).catch(error => {
+                        log('❌ Error inicializando calculadora: ' + error.message);
+                    });
+                    
+                } catch (error) {
+                    log('❌ Error creando calculadora: ' + error.message);
+                }
+            } else {
+                log('❌ FunctionsCalculator no está disponible');
+            }
+        }
+        
+        function forceReload() {
+            log('Forzando recarga completa...');
+            // Limpiar caché y recargar
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                    log('Caché limpiado, recargando...');
+                    setTimeout(() => {
+                        location.reload(true);
+                    }, 500);
+                });
+            } else {
+                log('Recargando página...');
+                location.reload(true);
+            }
+        }
+        
+        // Inicializar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Página cargada, iniciando verificaciones...');
+            
+            // Renderizar iconos
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+            
+            // Verificar librerías primero
+            setTimeout(() => {
+                checkLibraries();
+                checkFileStatus();
+            }, 1000);
+        });
+        
+        // Función global para debug
+        window.debugCalculator = function() {
+            log('=== DEBUG INFO ===');
+            log('window.FunctionsCalculator: ' + (typeof window.FunctionsCalculator));
+            log('window.katex: ' + (typeof window.katex));
+            log('window.math: ' + (typeof math));
+            log('window.lucide: ' + (typeof window.lucide));
+            log('==================');
+        };
+    </script>
+</body>
+</html>

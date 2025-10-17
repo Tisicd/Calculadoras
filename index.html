@@ -8,6 +8,10 @@
   <link href="./src/output.css" rel="stylesheet">
   <script defer src="https://unpkg.com/flowbite@2.3.0/dist/flowbite.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- KaTeX para renderizado matemático -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" integrity="sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
   <!-- MathJS para cálculos numéricos - SIN defer para cargar antes -->
   <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js" 
           onerror="console.error('Error cargando MathJS desde unpkg, intentando CDN alternativo'); 
@@ -16,10 +20,12 @@
                    document.head.appendChild(script);"></script>
   <!-- Carga de módulos de calculadoras -->
   <script defer src="calculators/matrixCalculator.js"></script>
-  <script defer src="calculators/functionsCalculator.js"></script>
+  <script defer src="calculators/functionsCalculator.js?v=2.5&t=20241201_6"></script>
   <script defer src="calculators/explainWithLLM.js"></script>
   <!-- Carga global del JS de Matriz Inversa (legacy) -->
   <script defer src="services/matriz_inversa/js/script.js"></script>
+  <!-- Carga global del JS de Determinantes -->
+  <script defer src="services/determinantes/js/script.js"></script>
 
   <script>
     window.MathJax = {
@@ -31,6 +37,107 @@
   <style>
     .transition-all {
       transition: all 0.3s ease;
+    }
+    
+    /* Estilos para renderizado matemático */
+    .math-expression {
+      display: inline-block;
+      margin: 0 4px;
+    }
+    
+    .katex-display {
+      margin: 1em 0;
+      text-align: center;
+    }
+    
+    /* FORZAR GRID PARA SÍMBOLOS MATEMÁTICOS */
+    #symbolButtons {
+      display: grid !important;
+      grid-template-columns: repeat(16, 1fr) !important;
+      gap: 4px !important;
+      width: 100% !important;
+    }
+    
+    .symbol-btn {
+      aspect-ratio: 1 !important;
+      min-height: 30px !important;
+      font-size: 11px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    /* Asegurar que el contenedor tenga el ancho correcto */
+    #symbolButtons {
+      max-width: 100% !important;
+      margin: 0 auto !important;
+    }
+    
+    /* FORZAR LAYOUT HORIZONTAL PARA BOTONES DE OPERACIONES */
+    #operationButtons {
+      display: flex !important;
+      gap: 12px !important;
+      flex-wrap: wrap !important;
+      width: 100% !important;
+    }
+    
+    .btn-operation {
+      flex: 1 !important;
+      min-width: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    /* FORZAR VISIBILIDAD DEL BOTÓN RESOLVER */
+    #calculateBtn {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: #e5e7eb !important;
+      color: #374151 !important;
+      border: 1px solid #d1d5db !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      position: relative !important;
+      z-index: 10 !important;
+    }
+    
+    #calculateBtn:not(:disabled) {
+      background-color: #ef4444 !important;
+      color: white !important;
+      border-color: #dc2626 !important;
+    }
+    
+    .katex {
+      font-size: 1.1em;
+    }
+    
+    /* Mejorar contraste en modo oscuro */
+    .katex .mord {
+      color: #1f2937;
+    }
+    
+    /* Animaciones suaves para renderizado */
+    .math-expression {
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Estilos para vista previa matemática */
+    #functionPreviewMath {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+      margin-top: 8px;
     }
   </style>
 </head>
@@ -56,13 +163,23 @@
 
         <!-- MENÚ -->
         <div class="px-4 pb-2 mt-4">
-          <p class="text-xs text-gray-500 font-semibold tracking-wide">APPS</p>
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">ÁLGEBRA LINEAL</p>
         </div>
         <nav class="flex-1 space-y-1 px-2 pb-4">
           <button onclick="loadPage('services/matriz_inversa/index.html', this)" class="nav-item">
             <i data-lucide="function-square" class="w-5 h-5"></i>
             <span class="ml-3">Matriz Inversa</span>
           </button>
+          <button onclick="loadPage('services/determinantes/index.html', this)" class="nav-item">
+            <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+            <span class="ml-3">Determinantes</span>
+          </button>
+        </nav>
+
+        <div class="px-4 pb-2 mt-4">
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">OTRAS CALCULADORAS</p>
+        </div>
+        <nav class="flex-1 space-y-1 px-2 pb-4">
           <button onclick="loadPage('services/calculo/index.html', this)" class="nav-item">
             <i data-lucide="calculator" class="w-5 h-5"></i>
             <span class="ml-3">Cálculo</span>
@@ -143,6 +260,19 @@
           if (window.MathJax && MathJax.typesetPromise) {
             MathJax.typesetPromise();
           }
+          
+          // Renderizar KaTeX si está disponible
+          if (window.renderMathInElement) {
+            window.renderMathInElement(document.body, {
+              delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+              ],
+              throwOnError: false
+            });
+          }
 
           // 👉 Inicializa las calculadoras según el contenido cargado
           const tryInit = () => {
@@ -182,6 +312,7 @@
               if (typeof math !== 'undefined') {
                 console.log('🚀 Inicializando calculadora de funciones...');
                 const functionsCalc = new window.FunctionsCalculator();
+                window.functionsCalculator = functionsCalc; // Asignar globalmente para quickSolve
                 functionsCalc.init();
               } else {
                 console.warn('⚠️ MathJS no disponible, saltando calculadora de funciones');
@@ -203,6 +334,12 @@
             if (matrixGrid && typeof window.initMatrizInversa === 'function') {
               console.log('🚀 Inicializando calculadora legacy...');
               window.initMatrizInversa();
+            }
+            
+            // Inicializar calculadora de determinantes
+            if (matrixGrid && typeof window.initDeterminantes === 'function') {
+              console.log('🚀 Inicializando calculadora de determinantes...');
+              window.initDeterminantes();
             }
           };
           

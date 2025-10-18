@@ -165,3 +165,4 @@ Una calculadora científica moderna con:
 3. **Probar funcionalidad**: Escribir función, usar símbolos, seleccionar operación
 
 El layout ahora tiene una estructura profesional tipo calculadora científica moderna con todos los elementos alineados y distribuidos uniformemente.
+

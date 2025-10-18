@@ -20,7 +20,7 @@
                    document.head.appendChild(script);"></script>
   <!-- Carga de módulos de calculadoras -->
   <script defer src="calculators/matrixCalculator.js"></script>
-  <script defer src="calculators/functionsCalculator.js?v=2.5&t=20241201_6"></script>
+  <script defer src="calculators/functionsCalculator.js?v=2.6&t=DEV_20251018_01"></script>
   <script defer src="calculators/explainWithLLM.js"></script>
   <!-- Carga global del JS de Matriz Inversa (legacy) -->
   <script defer src="services/matriz_inversa/js/script.js"></script>
@@ -288,23 +288,24 @@
                 const input = document.getElementById('functionInput');
                 if (input) {
                   input.value = func;
-                  const parseBtn = document.getElementById('parseFunctionBtn');
-                  if (parseBtn) {
-                    parseBtn.click();
-                  }
+                  try {
+                    // Disparar validación y vista previa en vivo
+                    if (window.functionsCalculator && typeof window.functionsCalculator.handleFunctionInput === 'function') {
+                      window.functionsCalculator.handleFunctionInput(func);
+                    } else {
+                      // Fallback: disparar evento input
+                      const evt = new Event('input', { bubbles: true });
+                      input.dispatchEvent(evt);
+                    }
+                  } catch (e) { console.warn('Error en setFunction -> handleFunctionInput', e); }
                 } else {
                   console.warn('Input de función no encontrado');
                 }
               };
             }
             
-            // Inicializar calculadora de matrices (nueva modular)
-            const matrixGrid = document.getElementById('matrixGrid');
-            if (matrixGrid && typeof window.MatrixCalculator === 'function') {
-              console.log('🚀 Inicializando calculadora de matrices...');
-              const matrixCalc = new window.MatrixCalculator();
-              matrixCalc.init();
-            }
+            // Inicialización de matriz modular deshabilitada para evitar colisiones con otros módulos que usan #matrixGrid
+            // Si se requiere en el futuro, añadir un flag/ID específico del módulo antes de habilitar
             
             // Inicializar calculadora de funciones (solo si MathJS está disponible)
             const functionsContainer = document.getElementById('functionsContainer');
@@ -330,15 +331,17 @@
               }
             }
             
-            // Inicializar calculadora legacy (matrices)
-            if (matrixGrid && typeof window.initMatrizInversa === 'function') {
-              console.log('🚀 Inicializando calculadora legacy...');
+            // Inicializar matriz inversa si está presente su botón dedicado
+            const preCalcBtn = document.getElementById('preCalcBtn');
+            if (typeof window.initMatrizInversa === 'function' && preCalcBtn) {
+              console.log('🚀 Inicializando calculadora legacy (matriz inversa)...');
               window.initMatrizInversa();
             }
-            
-            // Inicializar calculadora de determinantes
-            if (matrixGrid && typeof window.initDeterminantes === 'function') {
-              console.log('🚀 Inicializando calculadora de determinantes...');
+
+            // Inicializar determinantes si existe #matrixGrid pero NO existe preCalcBtn
+            const matrixGridInContent = document.getElementById('content')?.querySelector('#matrixGrid');
+            if (typeof window.initDeterminantes === 'function' && matrixGridInContent && !preCalcBtn) {
+              console.log('🚀 Inicializando calculadora de determinantes (por #matrixGrid)...');
               window.initDeterminantes();
             }
           };

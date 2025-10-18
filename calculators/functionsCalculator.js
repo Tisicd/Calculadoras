@@ -303,11 +303,11 @@ class FunctionsCalculator {
               </div>
             </div>
             
-            <!-- Pasos detallados -->
+            <!-- Solución paso a paso -->
             <div id="stepsSection" class="mb-6">
               <h4 class="text-base font-bold text-gray-700 mb-3 flex items-center">
                 <i data-lucide="list" class="w-4 h-4 mr-2"></i>
-                Pasos detallados
+                Solución paso a paso
               </h4>
               <div id="stepsStream" class="space-y-3 max-h-64 overflow-y-auto">
                 <!-- Pasos se añaden aquí dinámicamente -->
@@ -536,9 +536,22 @@ class FunctionsCalculator {
 
   // ---- Control de Estado Dinámico ----
   
+  normalizeFunctionInput(raw) {
+    if (!raw) return '';
+    let s = String(raw).trim();
+    // Si viene como "f(x) = ..." tomar RHS
+    if (s.includes('=')) {
+      s = s.split('=').slice(1).join('=').trim();
+    }
+    // Quitar prefijos "f(x)" o similares
+    s = s.replace(/^f\s*\(x\)\s*/i, '').trim();
+    return s;
+  }
+
   handleFunctionInput(value) {
-    this.currentFunction = value.trim();
-    this.updateLivePreview(value);
+    const normalized = this.normalizeFunctionInput(value);
+    this.currentFunction = normalized;
+    this.updateLivePreview(normalized);
     this.updateResolveButtonState();
   }
 
@@ -602,7 +615,7 @@ class FunctionsCalculator {
     
     try {
       if (!this.math) return false;
-      const parsed = this.math.parse(func.trim());
+      const parsed = this.math.parse(this.normalizeFunctionInput(func));
       return parsed !== null;
     } catch (error) {
       return false;
@@ -613,7 +626,7 @@ class FunctionsCalculator {
     const functionInput = document.getElementById('functionInput');
     if (!functionInput) return;
     
-    const input = functionInput.value.trim();
+    const input = this.normalizeFunctionInput(functionInput.value);
     if (!input) {
       this.showError('Por favor ingresa una función');
       return;
@@ -736,6 +749,72 @@ class FunctionsCalculator {
     }
   }
 
+  typesetElement(el) {
+    if (!el) return;
+    try {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(el, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+          ],
+          throwOnError: false
+        });
+      }
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([el]).catch(()=>{});
+      }
+    } catch (_) {}
+  }
+
+  splitTextAndMath(desc) {
+    if (!desc || typeof desc !== 'string') return { text: '', math: '' };
+    const byColon = desc.split(':');
+    if (byColon.length > 1) {
+      return { text: byColon[0].trim(), math: byColon.slice(1).join(':').trim() };
+    }
+    const eqIdx = desc.indexOf('=');
+    if (eqIdx > -1) {
+      return { text: desc.slice(0, eqIdx).trim(), math: desc.slice(eqIdx).trim() };
+    }
+    return { text: desc, math: '' };
+  }
+
+  expressionToLatex(expr) {
+    try {
+      if (!expr) return '';
+      // Normalizar espacios
+      let e = expr.replace(/\s+/g, ' ').trim();
+      // Si hay '=', tomar RHS para visualizar mejor
+      if (e.includes('=')) {
+        e = e.split('=').slice(1).join('=').trim();
+      }
+      // Limpiar prefijos verbales comunes
+      e = e.replace(/^f\(x\)\s*dx\s*/i, '')
+           .replace(/^f\(x\)\s*/i, '')
+           .replace(/^d\/dx\s*/i, '')
+           .trim();
+      // Intentar conversión robusta con MathJS
+      if (this.math && this.math.parse) {
+        try {
+          const node = this.math.parse(e);
+          const tex = node.toTex({ parenthesis: 'keep', implicit: 'show' });
+          return tex;
+        } catch (_) {}
+      }
+      // Fallback manual: mathToLatex
+      let latex = this.mathToLatex(e);
+      // Derivadas comunes
+      latex = latex.replace(/d\s*\/\s*dx\s*\(([^)]*)\)/g, '\\frac{d}{dx}\\left($1\\right)');
+      latex = latex.replace(/d\^([a-zA-Z0-9]+)\s*\/\s*dx\^\1/g, '\\frac{d^{$1}}{dx^{$1}}');
+      return latex;
+    } catch (_) {
+      return expr;
+    }
+  }
+
   mathToLatex(expression) {
     try {
       let latex = expression
@@ -832,7 +911,7 @@ class FunctionsCalculator {
     }
 
     const functionInput = document.getElementById('functionInput');
-    const input = functionInput ? functionInput.value.trim() : '';
+    const input = functionInput ? this.normalizeFunctionInput(functionInput.value) : '';
     
     if (!input || !this.currentOperation) {
       this.showError('Por favor ingresa una función y selecciona una operación');
@@ -1024,7 +1103,8 @@ class FunctionsCalculator {
 
   addStepCard(container, { title, desc, tone = 'blue' }) {
     const card = document.createElement('div');
-    card.className = `border-l-4 pl-3 py-3 bg-slate-50 rounded border-${tone}-500`;
+    card.className = 'border-l-4 pl-3 py-3 bg-slate-50 rounded';
+    card.classList.add(`border-${tone}-500`);
 
     if (title) {
       const h = document.createElement('h4');
@@ -1033,12 +1113,33 @@ class FunctionsCalculator {
       card.appendChild(h);
     }
     if (desc) {
-      const p = document.createElement('p');
-      p.className = 'text-slate-800 leading-relaxed mb-2 text-sm';
-      p.innerHTML = desc;
-      card.appendChild(p);
+      const { text, math } = this.splitTextAndMath(desc);
+      if (text) {
+        const p = document.createElement('p');
+        p.className = 'text-slate-800 leading-relaxed mb-2 text-sm';
+        p.textContent = text;
+        card.appendChild(p);
+      }
+
+      if (math) {
+        const mathDiv = document.createElement('div');
+        mathDiv.className = 'bg-gray-50 p-2 rounded border';
+        const latexExpr = this.expressionToLatex(math);
+        if (window.katex) {
+          try { window.katex.render(latexExpr, mathDiv, {throwOnError:false, displayMode:true}); }
+          catch(_) { mathDiv.innerHTML = `\\[ ${latexExpr} \\]`; }
+        } else {
+          mathDiv.innerHTML = `\\[ ${latexExpr} \\]`;
+        }
+        card.appendChild(mathDiv);
+      }
     }
     container.appendChild(card);
+    // Renderizar matemáticas si el paso incluye LaTeX
+    this.typesetElement(card);
+    // Reintentos diferidos por si KaTeX/MathJax aún no están listos
+    setTimeout(() => this.typesetElement(card), 150);
+    setTimeout(() => this.typesetElement(card), 400);
   }
 
   async verifyWithMathJS(result) {

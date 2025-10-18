@@ -34,6 +34,29 @@
     return d === 1 ? `${n}` : `${n}/${d}`;
   }
 
+  // Conversión básica de expresiones planas a LaTeX
+  function plainToLatex(expression){
+    try {
+      if (!expression || typeof expression !== 'string') return '';
+      let latex = expression.trim();
+      latex = latex.replace(/\*\*/g, '^')
+                   .replace(/\*([a-zA-Z])/g, '\\cdot $1')
+                   .replace(/sin\(/g, '\\sin(')
+                   .replace(/cos\(/g, '\\cos(')
+                   .replace(/tan\(/g, '\\tan(')
+                   .replace(/log\(/g, '\\log(')
+                   .replace(/exp\(/g, 'e^')
+                   .replace(/sqrt\(/g, '\\sqrt{')
+                   .replace(/abs\(/g, '\\left|')
+                   .replace(/pi/g, '\\pi');
+      // Fracciones simples a \frac{}
+      latex = latex.replace(/([^\/\s]+)\/([^\/\s]+)/g, (m,a,b)=>`\\frac{${a}}{${b}}`);
+      // Exponentes { }
+      latex = latex.replace(/\^([a-zA-Z0-9\(\)]+)/g, '^{$1}');
+      return latex;
+    } catch(_) { return expression; }
+  }
+
   function latexMatrix(M){
     return `\\begin{bmatrix}${M.map(r=>r.map(fmt).join(' & ')).join('\\\\')}\\end{bmatrix}`;
   }
@@ -200,8 +223,21 @@
     if (math) {
       const m = document.createElement('div');
       m.className = 'bg-gray-50 p-3 rounded border mb-2 overflow-x-auto';
-      m.innerHTML = math;
+      // Si no trae delimitadores LaTeX, convertir y envolver
+      const hasDelims = /\\\[|\\\]|\$\$|\\begin\{.*?\}/.test(math||'');
+      const content = hasDelims ? math : `\\[ ${plainToLatex(math)} \\]`;
+      m.innerHTML = content;
       card.appendChild(m);
+
+      // Intentar renderizar con KaTeX directamente
+      try {
+        if (window.katex) {
+          const raw = (content || '')
+            .replace(/^\\\[|^\$\$|^\\\(|^\$/,'')
+            .replace(/\\\]$|\$\$$|\\\)$|\$$/,'');
+          window.katex.render(raw, m, {throwOnError:false, displayMode:true});
+        }
+      } catch(_){}
     }
     if (matrix) {
       const tbl = document.createElement('table');
@@ -223,9 +259,22 @@
   }
 
   function typeset(el){
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      window.MathJax.typesetPromise([el]).catch(()=>{});
-    }
+    try {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(el, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+          ],
+          throwOnError: false
+        });
+      }
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([el]).catch(()=>{});
+      }
+    } catch(_){}
   }
 
   // ---- INIT pública ----

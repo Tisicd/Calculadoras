@@ -1,0 +1,23 @@
+<div id="edoHub" class="min-h-screen bg-gray-50 p-4">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <section class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+      <h1 class="text-2xl font-bold text-indigo-600">Ecuaciones Diferenciales Ordinarias (EDO)</h1>
+      <p class="text-slate-600">Selecciona una calculadora:</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onclick="loadPage('services/edo/primer_orden.html', this)" class="nav-item border rounded-lg p-4 text-left">
+          <div class="text-lg font-semibold">EDO Primer Orden</div>
+          <div class="text-sm text-slate-600">Resolver \(\frac{dy}{dx}=f(x,y)\)</div>
+        </button>
+        <button onclick="loadPage('services/edo/segundo_orden.html', this)" class="nav-item border rounded-lg p-4 text-left">
+          <div class="text-lg font-semibold">EDO 2º Orden Lineales</div>
+          <div class="text-sm text-slate-600">Resolver \(y''+a y'+b y=f(x)\)</div>
+        </button>
+        <button onclick="loadPage('services/edo/sistemas.html', this)" class="nav-item border rounded-lg p-4 text-left">
+          <div class="text-lg font-semibold">Sistemas Lineales</div>
+          <div class="text-sm text-slate-600">Resolver \(\frac{d\mathbf{Y}}{dx}=A\mathbf{Y}\)</div>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
+

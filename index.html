@@ -26,6 +26,7 @@
   <script defer src="services/matriz_inversa/js/script.js"></script>
   <!-- Carga global del JS de Determinantes -->
   <script defer src="services/determinantes/js/script.js"></script>
+  <script defer src="services/edo/js/edo.js"></script>
 
   <script>
     window.MathJax = {
@@ -177,16 +178,22 @@
         </nav>
 
         <div class="px-4 pb-2 mt-4">
-          <p class="text-xs text-gray-500 font-semibold tracking-wide">OTRAS CALCULADORAS</p>
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">CÁLCULO</p>
         </div>
         <nav class="flex-1 space-y-1 px-2 pb-4">
           <button onclick="loadPage('services/calculo/index.html', this)" class="nav-item">
             <i data-lucide="calculator" class="w-5 h-5"></i>
-            <span class="ml-3">Cálculo</span>
+            <span class="ml-3">Calculadora de Cálculo</span>
           </button>
+        </nav>
+
+        <div class="px-4 pb-2 mt-4">
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">EDO</p>
+        </div>
+        <nav class="flex-1 space-y-1 px-2 pb-4">
           <button onclick="loadPage('services/edo/index.html', this)" class="nav-item">
             <i data-lucide="activity" class="w-5 h-5"></i>
-            <span class="ml-3">EDO</span>
+            <span class="ml-3">Calculadoras EDO</span>
           </button>
         </nav>
       </div>
@@ -343,6 +350,20 @@
             if (typeof window.initDeterminantes === 'function' && matrixGridInContent && !preCalcBtn) {
               console.log('🚀 Inicializando calculadora de determinantes (por #matrixGrid)...');
               window.initDeterminantes();
+            }
+
+            // Inicializar EDOs según contenedor
+            if (document.getElementById('edo1Container') && typeof window.initEDO1==='function') {
+              console.log('🚀 Inicializando EDO 1er orden...');
+              window.initEDO1();
+            }
+            if (document.getElementById('edo2Container') && typeof window.initEDO2==='function') {
+              console.log('🚀 Inicializando EDO 2º orden...');
+              window.initEDO2();
+            }
+            if (document.getElementById('edosysContainer') && typeof window.initEDOSys==='function') {
+              console.log('🚀 Inicializando Sistemas de EDO...');
+              window.initEDOSys();
             }
           };
           

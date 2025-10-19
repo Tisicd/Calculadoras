@@ -1,0 +1,26 @@
+<div id="edo1Container" class="min-h-screen bg-gray-50 p-4">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <section class="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+      <h2 class="text-2xl font-bold text-indigo-600">EDO de Primer Orden</h2>
+      <div>
+        <p class="text-sm text-gray-600 mb-2">Ecuación (formato: dy/dx = f(x,y))</p>
+        <input id="edo1Eq" type="text" placeholder="dy/dx = x*y" class="w-full p-3 border rounded-lg">
+      </div>
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <input id="edo1x0" type="number" step="any" class="p-3 border rounded" placeholder="x0 (opcional)">
+        <input id="edo1y0" type="number" step="any" class="p-3 border rounded" placeholder="y(x0) (opcional)">
+        <input id="edo1xf" type="number" step="any" class="p-3 border rounded" placeholder="xf (para RK4)">
+      </div>
+      <div class="flex gap-3">
+        <button id="edo1Solve" class="px-4 py-2 bg-indigo-600 text-white rounded">Resolver</button>
+        <button id="edo1RK" class="px-4 py-2 bg-blue-600 text-white rounded">RK4</button>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow-xl p-6">
+      <h3 class="text-xl font-semibold text-indigo-600 mb-3">Solución paso a paso</h3>
+      <div id="edo1Steps" class="space-y-3"></div>
+    </section>
+  </div>
+</div>
+

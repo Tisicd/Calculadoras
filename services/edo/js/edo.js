@@ -33,6 +33,7 @@
   }
 
   window.initEDO1 = function(){
+    console.log('🧮 initEDO1: inicializando calculadora EDO primer orden');
     const eq = document.getElementById('edo1Eq');
     const x0 = document.getElementById('edo1x0');
     const y0 = document.getElementById('edo1y0');
@@ -42,7 +43,14 @@
     const steps = document.getElementById('edo1Steps');
     if(!eq||!btn||!steps) return;
 
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('cursor-not-allowed');
+      btn.style.cursor = 'pointer';
+      btn.addEventListener('mouseenter', ()=> btn.style.cursor = 'pointer');
+    }
     btn.addEventListener('click', ()=>{
+      console.log('🧮 initEDO1: click en Resolver EDO');
       steps.innerHTML='';
       const s = eq.value || '';
       const m = s.split('=');
@@ -57,7 +65,14 @@
       }catch(_){ }
     });
 
+    if (btnRK) {
+      btnRK.disabled = false;
+      btnRK.classList.remove('cursor-not-allowed');
+      btnRK.style.cursor = 'pointer';
+      btnRK.addEventListener('mouseenter', ()=> btnRK.style.cursor = 'pointer');
+    }
     btnRK.addEventListener('click', ()=>{
+      console.log('🧮 initEDO1: click en RK4');
       steps.innerHTML='';
       const s = eq.value || '';
       const m = s.split('='); if(m.length<2){ addStep(steps,'Formato inválido','$$ \\frac{dy}{dx}=f(x,y) $$'); return; }
@@ -73,11 +88,20 @@
   };
 
   window.initEDO2 = function(){
+    console.log('🧮 initEDO2: inicializando calculadora EDO segundo orden');
     const eq = document.getElementById('edo2Eq');
     const btn = document.getElementById('edo2Solve');
     const steps = document.getElementById('edo2Steps');
     if(!eq||!btn||!steps) return;
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('cursor-not-allowed');
+      btn.style.cursor = 'pointer';
+      btn.addEventListener('mouseenter', ()=> btn.style.cursor = 'pointer');
+    }
     btn.addEventListener('click', ()=>{
+      console.log('🧮 initEDO2: click en Resolver EDO');
       steps.innerHTML='';
       const s = eq.value||'';
       // parse simple: y'' + a*y' + b*y = 0 (solo homogénea por ahora)
@@ -105,11 +129,20 @@
   };
 
   window.initEDOSys = function(){
+    console.log('🧮 initEDOSys: inicializando calculadora sistemas EDO');
     const Ainp=document.getElementById('edosysA');
     const btn=document.getElementById('edosysSolve');
     const steps=document.getElementById('edosysSteps');
     if(!Ainp||!btn||!steps) return;
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('cursor-not-allowed');
+      btn.style.cursor = 'pointer';
+      btn.addEventListener('mouseenter', ()=> btn.style.cursor = 'pointer');
+    }
     btn.addEventListener('click',()=>{
+      console.log('🧮 initEDOSys: click en Resolver Sistema');
       steps.innerHTML='';
       try{
         const A = JSON.parse(Ainp.value);
@@ -120,4 +153,3 @@
     });
   };
 })();
-

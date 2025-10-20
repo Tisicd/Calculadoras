@@ -17,6 +17,31 @@
     typeset(card);
   }
 
+  // Funciones para establecer ejemplos
+  window.setEDO1Example = function(example) {
+    const input = document.getElementById('edo1Eq');
+    if (input) {
+      input.value = example;
+      console.log('🧮 EDO1: ejemplo establecido:', example);
+    }
+  };
+
+  window.setEDO2Example = function(example) {
+    const input = document.getElementById('edo2Eq');
+    if (input) {
+      input.value = example;
+      console.log('🧮 EDO2: ejemplo establecido:', example);
+    }
+  };
+
+  window.setEDOSysExample = function(example) {
+    const input = document.getElementById('edosysA');
+    if (input) {
+      input.value = example;
+      console.log('🧮 EDOSys: ejemplo establecido:', example);
+    }
+  };
+
   // RK4 simple para y' = f(x,y)
   function rk4(f, x0, y0, h, n){
     const pts=[[x0,y0]]; let x=x0, y=y0;

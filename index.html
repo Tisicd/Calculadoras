@@ -1,213 +1,415 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadoras Matemáticas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            }
-        };
-    </script>
-    <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SolvMath</title>
+  <link href="./src/output.css" rel="stylesheet">
+  <script defer src="https://unpkg.com/flowbite@2.3.0/dist/flowbite.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- KaTeX para renderizado matemático -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" integrity="sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+  <!-- MathJS para cálculos numéricos - SIN defer para cargar antes -->
+  <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js" 
+          onerror="console.error('Error cargando MathJS desde unpkg, intentando CDN alternativo'); 
+                   var script = document.createElement('script'); 
+                   script.src = 'https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.min.js'; 
+                   document.head.appendChild(script);"></script>
+  <!-- Carga de módulos de calculadoras -->
+  <script defer src="calculators/matrixCalculator.js"></script>
+  <script defer src="calculators/functionsCalculator.js?v=2.6&t=DEV_20251018_01"></script>
+  <script defer src="calculators/explainWithLLM.js"></script>
+  <!-- Carga global del JS de Matriz Inversa (legacy) -->
+  <script defer src="services/matriz_inversa/js/script.js"></script>
+  <!-- Carga global del JS de Determinantes -->
+  <script defer src="services/determinantes/js/script.js"></script>
+  <!-- Carga global del JS de EDO -->
+  <script defer src="services/edo/js/edo.js"></script>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .transition-all {
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos para renderizado matemático */
+    .math-expression {
+      display: inline-block;
+      margin: 0 4px;
+    }
+    
+    .katex-display {
+      margin: 1em 0;
+      text-align: center;
+    }
+    
+    /* FORZAR GRID PARA SÍMBOLOS MATEMÁTICOS */
+    #symbolButtons {
+      display: grid !important;
+      grid-template-columns: repeat(16, 1fr) !important;
+      gap: 4px !important;
+      width: 100% !important;
+    }
+    
+    .symbol-btn {
+      aspect-ratio: 1 !important;
+      min-height: 30px !important;
+      font-size: 11px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    /* Asegurar que el contenedor tenga el ancho correcto */
+    #symbolButtons {
+      max-width: 100% !important;
+      margin: 0 auto !important;
+    }
+    
+    /* FORZAR LAYOUT HORIZONTAL PARA BOTONES DE OPERACIONES */
+    #operationButtons {
+      display: flex !important;
+      gap: 12px !important;
+      flex-wrap: wrap !important;
+      width: 100% !important;
+    }
+    
+    .btn-operation {
+      flex: 1 !important;
+      min-width: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    /* FORZAR VISIBILIDAD DEL BOTÓN RESOLVER */
+    #calculateBtn {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: #e5e7eb !important;
+      color: #374151 !important;
+      border: 1px solid #d1d5db !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      position: relative !important;
+      z-index: 10 !important;
+    }
+    
+    #calculateBtn:not(:disabled) {
+      background-color: #ef4444 !important;
+      color: white !important;
+      border-color: #dc2626 !important;
+    }
+    
+    .katex {
+      font-size: 1.1em;
+    }
+    
+    /* Mejorar contraste en modo oscuro */
+    .katex .mord {
+      color: #1f2937;
+    }
+    
+    /* Animaciones suaves para renderizado */
+    .math-expression {
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Estilos para vista previa matemática */
+    #functionPreviewMath {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white shadow-lg">
-            <div class="p-4">
-                <h1 class="text-xl font-bold text-gray-800">Calculadoras</h1>
-            </div>
-            <nav class="mt-4">
-                <div class="px-4 py-2">
-                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">CÁLCULO</h2>
-                    <ul class="mt-2 space-y-1">
-                        <li>
-                            <button onclick="loadPage('services/calculo/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                Funciones
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div class="px-4 py-2">
-                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">ÁLGEBRA LINEAL</h2>
-                    <ul class="mt-2 space-y-1">
-                        <li>
-                            <button onclick="loadPage('services/matriz_inversa/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                Matriz Inversa
-                            </button>
-                        </li>
-                        <li>
-                            <button onclick="loadPage('services/determinantes/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                Determinantes
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div class="px-4 py-2">
-                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">EDO</h2>
-                    <ul class="mt-2 space-y-1">
-                        <li>
-                            <button onclick="loadPage('services/edo/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                EDO Hub
-                            </button>
-                        </li>
-                        <li>
-                            <button onclick="loadPage('services/edo/primer_orden.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                EDO 1er Orden
-                            </button>
-                        </li>
-                        <li>
-                            <button onclick="loadPage('services/edo/segundo_orden.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                EDO 2º Orden
-                            </button>
-                        </li>
-                        <li>
-                            <button onclick="loadPage('services/edo/sistemas.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                Sistemas EDO
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+
+<body class="bg-gray-100 text-gray-900">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+      class="z-40 inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-lg transform transition-transform duration-300 fixed">
+      <div class="flex flex-col h-full">
+
+        <!-- HEADER DEL SIDEBAR -->
+        <div class="relative border-b border-gray-200 p-0">
+          <img src="./assets/logo_principal.png" alt="Logo"
+            class="animate-pulseBig w-full h-[190px] object-contain object-center mx-auto" />
+          <button id="closeSidebar" class="absolute top-2.5 right-2.5 p-2 rounded hover:bg-gray-200 z-10 bg-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 overflow-hidden">
-            <div id="content" class="h-full overflow-y-auto">
-                <!-- Contenido se carga aquí -->
-            </div>
+        <!-- MENÚ -->
+        <div class="px-4 pb-2 mt-4">
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">ÁLGEBRA LINEAL</p>
         </div>
-    </div>
+        <nav class="flex-1 space-y-1 px-2 pb-4">
+          <button onclick="loadPage('services/matriz_inversa/index.html', this)" class="nav-item">
+            <i data-lucide="function-square" class="w-5 h-5"></i>
+            <span class="ml-3">Matriz Inversa</span>
+          </button>
+          <button onclick="loadPage('services/determinantes/index.html', this)" class="nav-item">
+            <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+            <span class="ml-3">Determinantes</span>
+          </button>
+        </nav>
 
-    <!-- Scripts -->
-    <script src="calculators/functionsCalculator.js"></script>
-    <script src="calculators/matrixCalculator.js"></script>
-    <script src="services/matriz_inversa/js/script.js"></script>
-    <script src="services/determinantes/js/script.js"></script>
-    <script src="services/edo/js/edo.js"></script>
+        <div class="px-4 pb-2 mt-4">
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">CÁLCULO</p>
+        </div>
+        <nav class="flex-1 space-y-1 px-2 pb-4">
+          <button onclick="loadPage('services/calculo/index.html', this)" class="nav-item">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+            <span class="ml-3">Funciones</span>
+          </button>
+        </nav>
 
-    <script>
-        // Función para cargar páginas
-        function loadPage(url, button) {
-            // Remover clase activa de todos los botones
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.classList.remove('bg-indigo-100', 'text-indigo-700');
-                btn.classList.add('text-gray-700');
+        <div class="px-4 pb-2 mt-4">
+          <p class="text-xs text-gray-500 font-semibold tracking-wide">EDO</p>
+        </div>
+        <nav class="flex-1 space-y-1 px-2 pb-4">
+          <button onclick="loadPage('services/edo/index.html', this)" class="nav-item">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+            <span class="ml-3">Ecuaciones Diferenciales</span>
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- BOTÓN HAMBURGUESA -->
+    <button id="toggleSidebar"
+      class="absolute top-4 left-4 z-50 p-2 rounded hover:bg-gray-200 border border-gray-300 bg-white hidden">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main id="mainContent" class="flex-1 bg-gray-50 overflow-y-auto transition-all duration-300 pl-64">
+      <div id="content" class="m-6 bg-white shadow rounded-lg p-6 min-h-[300px] relative">
+        <!-- CONTENIDO INICIAL -->
+        <p class="text-sm text-gray-600 mt-10">Selecciona una herramienta del panel izquierdo para comenzar.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- JS -->
+  <script>
+    lucide.createIcons();
+
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const closeBtn = document.getElementById('closeSidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    // Mostrar sidebar por defecto
+    window.addEventListener('DOMContentLoaded', () => {
+      sidebar.classList.remove('-translate-x-full');
+      mainContent.classList.add('pl-64');
+      toggleBtn.classList.add('hidden');
+      closeBtn.classList.remove('hidden');
+      lucide.createIcons();
+    });
+
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.remove('-translate-x-full');
+      mainContent.classList.add('pl-64');
+      toggleBtn.classList.add('hidden');
+      closeBtn.classList.add('hidden');
+      lucide.createIcons();
+    });
+
+    closeBtn.addEventListener('click', () => {
+      sidebar.classList.add('-translate-x-full');
+      mainContent.classList.remove('pl-64');
+      toggleBtn.classList.remove('hidden');
+      closeBtn.classList.add('hidden');
+      lucide.createIcons();
+    });
+
+    function loadPage(path, button) {
+      document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('bg-blue-100', 'text-blue-600'));
+      button.classList.add('bg-blue-100', 'text-blue-600');
+
+      fetch(path)
+        .then(res => res.text())
+        .then(html => {
+          const content = document.getElementById('content');
+          content.innerHTML = html;
+
+          // Renderiza iconos que vengan en el HTML cargado
+          if (window.lucide && typeof lucide.createIcons === 'function') {
+            lucide.createIcons();
+          }
+
+          // Re-typeset de MathJax si aparece LaTeX
+          if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise();
+          }
+          
+          // Renderizar KaTeX si está disponible
+          if (window.renderMathInElement) {
+            window.renderMathInElement(document.body, {
+              delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+              ],
+              throwOnError: false
             });
-            
-            // Añadir clase activa al botón clickeado
-            button.classList.add('bg-indigo-100', 'text-indigo-700');
-            button.classList.remove('text-gray-700');
-            
-            // Cargar contenido
-            fetch(url)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('content').innerHTML = html;
-                    // Inicializar calculadoras según el contenido cargado
-                    tryInit();
-                })
-                .catch(error => {
-                    console.error('Error cargando página:', error);
-                    document.getElementById('content').innerHTML = '<div class="p-8 text-center text-red-600">Error cargando la página</div>';
-                });
-        }
+          }
 
-        // Función para inicializar calculadoras según el contenido
-        function tryInit() {
-            console.log('🔄 tryInit: verificando contenido cargado');
+          // 👉 Inicializa las calculadoras según el contenido cargado
+          const tryInit = () => {
+            console.log('🔍 Verificando dependencias...');
+            console.log('MathJS disponible:', typeof math !== 'undefined');
+            console.log('MatrixCalculator disponible:', typeof window.MatrixCalculator === 'function');
+            console.log('FunctionsCalculator disponible:', typeof window.FunctionsCalculator === 'function');
             
-            // Verificar EDO Hub
-            if (document.getElementById('edoHub')) {
-                console.log('✅ EDO Hub detectado');
-                return;
-            }
-            
-            // Verificar EDO 1er orden
-            if (document.getElementById('edo1Container')) {
-                console.log('✅ EDO1 detectado, inicializando...');
-                if (window.initEDO1) {
-                    window.initEDO1();
+            // Asegurar que setFunction esté disponible globalmente
+            if (!window.setFunction) {
+              window.setFunction = function(func) {
+                console.log('setFunction llamada con:', func);
+                const input = document.getElementById('functionInput');
+                if (input) {
+                  input.value = func;
+                  try {
+                    // Disparar validación y vista previa en vivo
+                    if (window.functionsCalculator && typeof window.functionsCalculator.handleFunctionInput === 'function') {
+                      window.functionsCalculator.handleFunctionInput(func);
+                    } else {
+                      // Fallback: disparar evento input
+                      const evt = new Event('input', { bubbles: true });
+                      input.dispatchEvent(evt);
+                    }
+                  } catch (e) { console.warn('Error en setFunction -> handleFunctionInput', e); }
                 } else {
-                    console.error('❌ initEDO1 no disponible');
+                  console.warn('Input de función no encontrado');
                 }
-                return;
+              };
             }
             
-            // Verificar EDO 2º orden
-            if (document.getElementById('edo2Container')) {
-                console.log('✅ EDO2 detectado, inicializando...');
-                if (window.initEDO2) {
-                    window.initEDO2();
-                } else {
-                    console.error('❌ initEDO2 no disponible');
-                }
-                return;
+            // Inicialización de matriz modular deshabilitada para evitar colisiones con otros módulos que usan #matrixGrid
+            // Si se requiere en el futuro, añadir un flag/ID específico del módulo antes de habilitar
+            
+            // Inicializar calculadora de funciones (solo si MathJS está disponible)
+            const functionsContainer = document.getElementById('functionsContainer');
+            if (functionsContainer && typeof window.FunctionsCalculator === 'function') {
+              if (typeof math !== 'undefined') {
+                console.log('🚀 Inicializando calculadora de funciones...');
+                const functionsCalc = new window.FunctionsCalculator();
+                window.functionsCalculator = functionsCalc; // Asignar globalmente para quickSolve
+                functionsCalc.init();
+              } else {
+                console.warn('⚠️ MathJS no disponible, saltando calculadora de funciones');
+                functionsContainer.innerHTML = `
+                  <div class="p-6 text-center">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <h3 class="text-lg font-semibold text-yellow-800 mb-2">MathJS no disponible</h3>
+                      <p class="text-yellow-700 mb-4">La calculadora de funciones requiere MathJS para funcionar.</p>
+                      <button onclick="location.reload()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                        Recargar página
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }
             }
             
-            // Verificar Sistemas EDO
-            if (document.getElementById('edosysContainer')) {
-                console.log('✅ EDOSys detectado, inicializando...');
-                if (window.initEDOSys) {
-                    window.initEDOSys();
-                } else {
-                    console.error('❌ initEDOSys no disponible');
-                }
-                return;
+            // Inicializar calculadora legacy (matriz inversa) solo si existe su botón específico
+            const preCalcBtn = document.getElementById('preCalcBtn');
+            if (preCalcBtn && typeof window.initMatrizInversa === 'function') {
+              console.log('🚀 Inicializando calculadora legacy (matriz inversa)...');
+              window.initMatrizInversa();
             }
-            
-            // Verificar Determinantes
-            if (document.getElementById('determinantsContainer')) {
-                console.log('✅ Determinantes detectado, inicializando...');
-                if (window.initDeterminantes) {
-                    window.initDeterminantes();
-                } else {
-                    console.error('❌ initDeterminantes no disponible');
-                }
-                return;
-            }
-            
-            // Verificar Matriz Inversa
-            if (document.getElementById('matrixGrid') && document.getElementById('preCalcBtn')) {
-                console.log('✅ Matriz Inversa detectado, inicializando...');
-                if (window.initMatrizInversa) {
-                    window.initMatrizInversa();
-                } else {
-                    console.error('❌ initMatrizInversa no disponible');
-                }
-                return;
-            }
-            
-            // Verificar Funciones
-            if (document.getElementById('functionsContainer')) {
-                console.log('✅ Funciones detectado, inicializando...');
-                if (window.initFunctionsCalculator) {
-                    window.initFunctionsCalculator();
-                } else {
-                    console.error('❌ initFunctionsCalculator no disponible');
-                }
-                return;
-            }
-            
-            console.log('⚠️ No se detectó ninguna calculadora conocida');
-        }
 
-        // Cargar página inicial
-        window.addEventListener('load', () => {
-            loadPage('services/calculo/index.html', document.querySelector('.nav-item'));
+            // Inicializar calculadora de determinantes solo si existe el contenedor específico
+            const detContainer = document.getElementById('determinantsContainer');
+            const detInContent = document.getElementById('content')?.querySelector('#determinantsContainer');
+            if ((detContainer || detInContent) && typeof window.initDeterminantes === 'function' && !preCalcBtn) {
+              console.log('🚀 Inicializando calculadora de determinantes...');
+              window.initDeterminantes();
+            } else {
+              console.log('ℹ️ Determinantes no inicializado: detContainer=', !!detContainer, 'detInContent=', !!detInContent, 'preCalcBtn=', !!preCalcBtn);
+            }
+
+            // Inicializar calculadoras EDO
+            const edo1Container = document.getElementById('content')?.querySelector('#edo1Container');
+            const edo2Container = document.getElementById('content')?.querySelector('#edo2Container');
+            const edosysContainer = document.getElementById('content')?.querySelector('#edosysContainer');
+            
+            if (edo1Container && typeof window.initEDO1 === 'function') {
+              console.log('🚀 Inicializando calculadora EDO primer orden...');
+              window.initEDO1();
+            }
+            if (edo2Container && typeof window.initEDO2 === 'function') {
+              console.log('🚀 Inicializando calculadora EDO segundo orden...');
+              window.initEDO2();
+            }
+            if (edosysContainer && typeof window.initEDOSys === 'function') {
+              console.log('🚀 Inicializando calculadora sistemas EDO...');
+              window.initEDOSys();
+            }
+          };
+          
+          // Esperar un poco más para asegurar que todos los scripts estén cargados
+          setTimeout(tryInit, 100);
+        })
+        .catch(err => {
+          document.getElementById('content').innerHTML = `<p class='text-red-500'>Error cargando la página</p>`;
+          console.error(err);
         });
-    </script>
+    }
+
+  </script>
+
+  <!-- Estilos extra -->
+  <style>
+    .nav-item {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.95rem;
+      border-radius: 0.5rem;
+      color: #374151;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background-color: #f1f5f9;
+    }
+
+    #sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #sidebar::-webkit-scrollbar-thumb {
+      background-color: #d1d5db;
+      border-radius: 3px;
+    }
+  </style>
 </body>
+
 </html>

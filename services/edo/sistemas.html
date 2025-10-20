@@ -1,0 +1,56 @@
+<div id="edosysContainer" class="min-h-screen bg-gray-50 p-4">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Panel principal -->
+    <section class="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+      <h1 class="text-2xl font-bold text-indigo-600">Sistemas de EDO Lineales</h1>
+      <p class="text-slate-600">Resolver sistemas de la forma \(\frac{d\mathbf{Y}}{dx} = A\mathbf{Y}\)</p>
+      
+      <!-- Ejemplos comunes -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-blue-800 mb-3">Ejemplos para probar:</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button onclick="setEDOSysExample('[[1,2],[3,4]]')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>2x2 general:</strong> [[1,2],[3,4]]
+          </button>
+          <button onclick="setEDOSysExample('[[2,1],[0,2]]')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Autovalor repetido:</strong> [[2,1],[0,2]]
+          </button>
+          <button onclick="setEDOSysExample('[[0,-1],[1,0]]')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Complejos:</strong> [[0,-1],[1,0]]
+          </button>
+          <button onclick="setEDOSysExample('[[1,0,0],[0,2,0],[0,0,3]]')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Diagonal 3x3:</strong> [[1,0,0],[0,2,0],[0,0,3]]
+          </button>
+        </div>
+      </div>
+
+      <!-- Input de matriz -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-2">Matriz A (formato JSON):</label>
+        <textarea 
+          id="edosysA" 
+          placeholder="Ej: [[1,2],[3,4]]"
+          rows="3"
+          class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none font-mono"
+        ></textarea>
+        <p class="text-sm text-gray-500 mt-1">Formato: matriz como array de arrays en JSON</p>
+      </div>
+
+      <!-- Botón -->
+      <div>
+        <button id="edosysSolve" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+          Resolver Sistema
+        </button>
+      </div>
+    </section>
+
+    <!-- Solución paso a paso -->
+    <section class="bg-white rounded-2xl shadow-xl p-6">
+      <h2 class="text-xl font-semibold text-indigo-600 mb-3">Solución paso a paso</h2>
+      <div id="edosysSteps" class="max-h-[65vh] overflow-y-auto space-y-4">
+        <p class="text-slate-600">Ingresa una matriz y presiona <b>Resolver Sistema</b>.</p>
+      </div>
+    </section>
+  </div>
+</div>

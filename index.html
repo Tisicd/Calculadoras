@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadoras Matemáticas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-4">
+                <h1 class="text-xl font-bold text-gray-800">Calculadoras</h1>
+            </div>
+            <nav class="mt-4">
+                <div class="px-4 py-2">
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">CÁLCULO</h2>
+                    <ul class="mt-2 space-y-1">
+                        <li>
+                            <button onclick="loadPage('services/calculo/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                Funciones
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="px-4 py-2">
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">ÁLGEBRA LINEAL</h2>
+                    <ul class="mt-2 space-y-1">
+                        <li>
+                            <button onclick="loadPage('services/matriz_inversa/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                Matriz Inversa
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="loadPage('services/determinantes/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                Determinantes
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="px-4 py-2">
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">EDO</h2>
+                    <ul class="mt-2 space-y-1">
+                        <li>
+                            <button onclick="loadPage('services/edo/index.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                EDO Hub
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="loadPage('services/edo/primer_orden.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                EDO 1er Orden
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="loadPage('services/edo/segundo_orden.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                EDO 2º Orden
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="loadPage('services/edo/sistemas.html', this)" class="nav-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                Sistemas EDO
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-hidden">
+            <div id="content" class="h-full overflow-y-auto">
+                <!-- Contenido se carga aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="calculators/functionsCalculator.js"></script>
+    <script src="calculators/matrixCalculator.js"></script>
+    <script src="services/matriz_inversa/js/script.js"></script>
+    <script src="services/determinantes/js/script.js"></script>
+    <script src="services/edo/js/edo.js"></script>
+
+    <script>
+        // Función para cargar páginas
+        function loadPage(url, button) {
+            // Remover clase activa de todos los botones
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                btn.classList.add('text-gray-700');
+            });
+            
+            // Añadir clase activa al botón clickeado
+            button.classList.add('bg-indigo-100', 'text-indigo-700');
+            button.classList.remove('text-gray-700');
+            
+            // Cargar contenido
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('content').innerHTML = html;
+                    // Inicializar calculadoras según el contenido cargado
+                    tryInit();
+                })
+                .catch(error => {
+                    console.error('Error cargando página:', error);
+                    document.getElementById('content').innerHTML = '<div class="p-8 text-center text-red-600">Error cargando la página</div>';
+                });
+        }
+
+        // Función para inicializar calculadoras según el contenido
+        function tryInit() {
+            console.log('🔄 tryInit: verificando contenido cargado');
+            
+            // Verificar EDO Hub
+            if (document.getElementById('edoHub')) {
+                console.log('✅ EDO Hub detectado');
+                return;
+            }
+            
+            // Verificar EDO 1er orden
+            if (document.getElementById('edo1Container')) {
+                console.log('✅ EDO1 detectado, inicializando...');
+                if (window.initEDO1) {
+                    window.initEDO1();
+                } else {
+                    console.error('❌ initEDO1 no disponible');
+                }
+                return;
+            }
+            
+            // Verificar EDO 2º orden
+            if (document.getElementById('edo2Container')) {
+                console.log('✅ EDO2 detectado, inicializando...');
+                if (window.initEDO2) {
+                    window.initEDO2();
+                } else {
+                    console.error('❌ initEDO2 no disponible');
+                }
+                return;
+            }
+            
+            // Verificar Sistemas EDO
+            if (document.getElementById('edosysContainer')) {
+                console.log('✅ EDOSys detectado, inicializando...');
+                if (window.initEDOSys) {
+                    window.initEDOSys();
+                } else {
+                    console.error('❌ initEDOSys no disponible');
+                }
+                return;
+            }
+            
+            // Verificar Determinantes
+            if (document.getElementById('determinantsContainer')) {
+                console.log('✅ Determinantes detectado, inicializando...');
+                if (window.initDeterminantes) {
+                    window.initDeterminantes();
+                } else {
+                    console.error('❌ initDeterminantes no disponible');
+                }
+                return;
+            }
+            
+            // Verificar Matriz Inversa
+            if (document.getElementById('matrixGrid') && document.getElementById('preCalcBtn')) {
+                console.log('✅ Matriz Inversa detectado, inicializando...');
+                if (window.initMatrizInversa) {
+                    window.initMatrizInversa();
+                } else {
+                    console.error('❌ initMatrizInversa no disponible');
+                }
+                return;
+            }
+            
+            // Verificar Funciones
+            if (document.getElementById('functionsContainer')) {
+                console.log('✅ Funciones detectado, inicializando...');
+                if (window.initFunctionsCalculator) {
+                    window.initFunctionsCalculator();
+                } else {
+                    console.error('❌ initFunctionsCalculator no disponible');
+                }
+                return;
+            }
+            
+            console.log('⚠️ No se detectó ninguna calculadora conocida');
+        }
+
+        // Cargar página inicial
+        window.addEventListener('load', () => {
+            loadPage('services/calculo/index.html', document.querySelector('.nav-item'));
+        });
+    </script>
+</body>
+</html>

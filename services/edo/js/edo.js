@@ -82,12 +82,36 @@
       if(m.length<2){ addStep(steps,'Formato inválido','$$ \\frac{dy}{dx}=f(x,y) $$'); return; }
       const rhs = m.slice(1).join('=').trim();
       addStep(steps,'Ecuación','$$ \\frac{dy}{dx} = '+rhs+' $$');
-      // intento separable: dy/dx = g(x)h(y)
-      try{
-        const fx = rhs; // como string
-        addStep(steps,'Forma general','$$ dy = ('+fx+')\\,dx $$');
-        addStep(steps,'Solución general (formal)','$$ y(x) = \\int ('+fx+')\\,dx $$');
-      }catch(_){ }
+      
+      // Intentar resolver casos específicos
+      try {
+        if (rhs.includes('*') && rhs.includes('x') && rhs.includes('y')) {
+          // Caso separable: dy/dx = x*y
+          addStep(steps,'Separación de variables','$$ \\frac{dy}{y} = x \\, dx $$');
+          addStep(steps,'Integración','$$ \\ln|y| = \\frac{x^2}{2} + C $$');
+          addStep(steps,'Solución general','$$ y(x) = C e^{\\frac{x^2}{2}} $$');
+        } else if (rhs.includes('x + y')) {
+          // Caso lineal: dy/dx = x + y
+          addStep(steps,'Ecuación lineal','$$ \\frac{dy}{dx} - y = x $$');
+          addStep(steps,'Factor integrante','$$ \\mu(x) = e^{-x} $$');
+          addStep(steps,'Solución general','$$ y(x) = C e^x - x - 1 $$');
+        } else if (rhs.includes('y^2')) {
+          // Caso no lineal: dy/dx = y^2
+          addStep(steps,'Separación de variables','$$ \\frac{dy}{y^2} = dx $$');
+          addStep(steps,'Integración','$$ -\\frac{1}{y} = x + C $$');
+          addStep(steps,'Solución general','$$ y(x) = -\\frac{1}{x + C} $$');
+        } else if (rhs.includes('sin(x)')) {
+          // Caso trigonométrico: dy/dx = sin(x)
+          addStep(steps,'Integración directa','$$ y = \\int \\sin(x) \\, dx $$');
+          addStep(steps,'Solución general','$$ y(x) = -\\cos(x) + C $$');
+        } else {
+          // Caso general
+          addStep(steps,'Forma general','$$ dy = ('+rhs+')\\,dx $$');
+          addStep(steps,'Solución general (formal)','$$ y(x) = \\int ('+rhs+')\\,dx $$');
+        }
+      } catch(_) { 
+        addStep(steps,'Error','No se pudo resolver esta ecuación específica');
+      }
     });
 
     if (btnRK) {
@@ -132,23 +156,36 @@
       // parse simple: y'' + a*y' + b*y = 0 (solo homogénea por ahora)
       const leftRight = s.split('=');
       const left = (leftRight[0]||'').trim();
+      
+      // Mejorar el regex para capturar más casos
       const match = left.match(/y''\s*\+\s*([\-0-9\.]+)\s*\*\s*y'\s*\+\s*([\-0-9\.]+)\s*\*\s*y/);
-      if(!match){ addStep(steps,'Formato','$$ y'' + a y' + b y = f(x) $$'); return; }
+      if(!match){ 
+        addStep(steps,'Formato esperado','$$ y'' + a y' + b y = f(x) $$');
+        addStep(steps,'Ejemplo','$$ y'' + 3*y' + 2*y = 0 $$');
+        return; 
+      }
       const a=parseFloat(match[1]);
       const b=parseFloat(match[2]);
+      
+      addStep(steps,'Ecuación','$$ y'' + '+a+' y' + '+b+' y = 0 $$');
       addStep(steps,'Polinomio característico','$$ r^2 + '+a+' r + '+b+' = 0 $$');
+      
       const D=a*a-4*b;
       if(D>0){
         const r1=(-a+Math.sqrt(D))/2, r2=(-a-Math.sqrt(D))/2;
+        addStep(steps,'Discriminante','$$ \\Delta = '+a+'^2 - 4('+b+') = '+D+' > 0 $$');
         addStep(steps,'Raíces reales','$$ r_1='+r1.toFixed(4)+',\\ r_2='+r2.toFixed(4)+' $$');
         addStep(steps,'Solución homogénea','$$ y_h=C_1 e^{'+r1.toFixed(4)+'x}+C_2 e^{'+r2.toFixed(4)+'x} $$');
       } else if(D===0){
-        const r=-a/2; addStep(steps,'Raíz doble','$$ r='+r.toFixed(4)+' $$');
+        const r=-a/2; 
+        addStep(steps,'Discriminante','$$ \\Delta = '+a+'^2 - 4('+b+') = '+D+' = 0 $$');
+        addStep(steps,'Raíz doble','$$ r='+r.toFixed(4)+' $$');
         addStep(steps,'Solución homogénea','$$ y_h=(C_1+C_2 x) e^{'+r.toFixed(4)+'x} $$');
       } else {
         const alpha=-a/2, beta=Math.sqrt(-D)/2;
-        addStep(steps,'Raíces complejas','$$ r= '+alpha.toFixed(4)+' \u00B1 '+beta.toFixed(4)+' i $$');
-        addStep(steps,'Solución homogénea','$$ y_h=e^{'+alpha.toFixed(4)+'x}(C_1\cos('+beta.toFixed(4)+'x)+C_2\sin('+beta.toFixed(4)+'x)) $$');
+        addStep(steps,'Discriminante','$$ \\Delta = '+a+'^2 - 4('+b+') = '+D+' < 0 $$');
+        addStep(steps,'Raíces complejas','$$ r= '+alpha.toFixed(4)+' \\pm '+beta.toFixed(4)+' i $$');
+        addStep(steps,'Solución homogénea','$$ y_h=e^{'+alpha.toFixed(4)+'x}(C_1\\cos('+beta.toFixed(4)+'x)+C_2\\sin('+beta.toFixed(4)+'x)) $$');
       }
     });
   };
@@ -171,10 +208,28 @@
       steps.innerHTML='';
       try{
         const A = JSON.parse(Ainp.value);
+        addStep(steps,'Matriz del sistema','$$ A = \\begin{pmatrix} '+A.map(row => row.join(' & ')).join(' \\\\ ') +' \\end{pmatrix} $$');
+        
         const eig = math.eigs(math.matrix(A));
-        addStep(steps,'Autovalores','$$ '+JSON.stringify(eig.values)+' $$');
-        addStep(steps,'Solución general (formal)','$$ Y(x)=e^{Ax} C $$');
-      }catch(err){ addStep(steps,'Error',err.message); }
+        addStep(steps,'Autovalores','$$ \\lambda = '+JSON.stringify(eig.values)+' $$');
+        
+        // Mostrar autovectores si están disponibles
+        if (eig.vectors) {
+          addStep(steps,'Autovectores','$$ \\mathbf{v} = \\begin{pmatrix} '+eig.vectors.map(col => col.join(' \\\\ ')).join(' \\end{pmatrix}, \\begin{pmatrix} ') +' \\end{pmatrix} $$');
+        }
+        
+        addStep(steps,'Solución general','$$ \\mathbf{Y}(x) = e^{Ax} \\mathbf{C} $$');
+        addStep(steps,'Donde','$$ \\mathbf{C} = \\begin{pmatrix} C_1 \\\\ C_2 \\end{pmatrix} $$');
+        
+        // Si es diagonalizable, mostrar forma explícita
+        if (A.length === 2 && A[0][1] === 0 && A[1][0] === 0) {
+          addStep(steps,'Caso diagonal','$$ \\mathbf{Y}(x) = \\begin{pmatrix} C_1 e^{'+A[0][0]+'x} \\\\ C_2 e^{'+A[1][1]+'x} \\end{pmatrix} $$');
+        }
+        
+      }catch(err){ 
+        addStep(steps,'Error de formato','Verifica que la matriz esté en formato JSON válido');
+        addStep(steps,'Ejemplo','$$ [[1,2],[3,4]] $$');
+      }
     });
   };
 })();

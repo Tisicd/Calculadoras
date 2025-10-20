@@ -1,0 +1,55 @@
+<div id="edo2Container" class="min-h-screen bg-gray-50 p-4">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Panel principal -->
+    <section class="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+      <h1 class="text-2xl font-bold text-indigo-600">EDO Segundo Orden Lineales</h1>
+      <p class="text-slate-600">Resolver ecuaciones de la forma \(y'' + a y' + b y = f(x)\)</p>
+      
+      <!-- Ejemplos comunes -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-blue-800 mb-3">Ejemplos para probar:</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button onclick="setEDO2Example('y\'\' + 3*y\' + 2*y = 0')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Raíces reales:</strong> y'' + 3y' + 2y = 0
+          </button>
+          <button onclick="setEDO2Example('y\'\' + 4*y\' + 4*y = 0')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Raíz doble:</strong> y'' + 4y' + 4y = 0
+          </button>
+          <button onclick="setEDO2Example('y\'\' + 2*y\' + 5*y = 0')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Raíces complejas:</strong> y'' + 2y' + 5y = 0
+          </button>
+          <button onclick="setEDO2Example('y\'\' + y = 0')" class="text-left p-2 bg-white rounded border hover:bg-blue-100">
+            <strong>Oscilador:</strong> y'' + y = 0
+          </button>
+        </div>
+      </div>
+
+      <!-- Input de ecuación -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-2">Ecuación diferencial:</label>
+        <input 
+          type="text" 
+          id="edo2Eq" 
+          placeholder="Ej: y'' + 3*y' + 2*y = 0"
+          class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none text-lg"
+        />
+      </div>
+
+      <!-- Botón -->
+      <div>
+        <button id="edo2Solve" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+          Resolver EDO
+        </button>
+      </div>
+    </section>
+
+    <!-- Solución paso a paso -->
+    <section class="bg-white rounded-2xl shadow-xl p-6">
+      <h2 class="text-xl font-semibold text-indigo-600 mb-3">Solución paso a paso</h2>
+      <div id="edo2Steps" class="max-h-[65vh] overflow-y-auto space-y-4">
+        <p class="text-slate-600">Ingresa una ecuación y presiona <b>Resolver EDO</b>.</p>
+      </div>
+    </section>
+  </div>
+</div>

@@ -19,26 +19,42 @@
 
   // Funciones para establecer ejemplos
   window.setEDO1Example = function(example) {
+    console.log('🔧 setEDO1Example llamada con:', example);
     const input = document.getElementById('edo1Eq');
     if (input) {
       input.value = example;
-      console.log('🧮 EDO1: ejemplo establecido:', example);
+      console.log('✅ EDO1: ejemplo establecido:', example);
+      // Disparar evento input para activar cualquier validación
+      const event = new Event('input', { bubbles: true });
+      input.dispatchEvent(event);
+    } else {
+      console.error('❌ setEDO1Example: input edo1Eq no encontrado');
     }
   };
 
   window.setEDO2Example = function(example) {
+    console.log('🔧 setEDO2Example llamada con:', example);
     const input = document.getElementById('edo2Eq');
     if (input) {
       input.value = example;
-      console.log('🧮 EDO2: ejemplo establecido:', example);
+      console.log('✅ EDO2: ejemplo establecido:', example);
+      const event = new Event('input', { bubbles: true });
+      input.dispatchEvent(event);
+    } else {
+      console.error('❌ setEDO2Example: input edo2Eq no encontrado');
     }
   };
 
   window.setEDOSysExample = function(example) {
+    console.log('🔧 setEDOSysExample llamada con:', example);
     const input = document.getElementById('edosysA');
     if (input) {
       input.value = example;
-      console.log('🧮 EDOSys: ejemplo establecido:', example);
+      console.log('✅ EDOSys: ejemplo establecido:', example);
+      const event = new Event('input', { bubbles: true });
+      input.dispatchEvent(event);
+    } else {
+      console.error('❌ setEDOSysExample: input edosysA no encontrado');
     }
   };
 
@@ -66,20 +82,32 @@
     const btn = document.getElementById('edo1Solve');
     const btnRK = document.getElementById('edo1RK');
     const steps = document.getElementById('edo1Steps');
-    if(!eq||!btn||!steps) return;
-
-    if (btn) {
-      btn.disabled = false;
-      btn.classList.remove('cursor-not-allowed');
-      btn.style.cursor = 'pointer';
-      btn.addEventListener('mouseenter', ()=> btn.style.cursor = 'pointer');
+    if(!eq||!btn||!steps) {
+      console.error('❌ initEDO1: elementos no encontrados', {eq: !!eq, btn: !!btn, steps: !!steps});
+      return;
     }
-    btn.addEventListener('click', ()=>{
+
+    console.log('✅ initEDO1: elementos encontrados, habilitando botones...');
+    
+    // Habilitar botón resolver
+    btn.disabled = false;
+    btn.classList.remove('cursor-not-allowed', 'opacity-50');
+    btn.style.cursor = 'pointer';
+    btn.style.opacity = '1';
+    
+    // Remover listeners previos para evitar duplicados
+    btn.replaceWith(btn.cloneNode(true));
+    const newBtn = document.getElementById('edo1Solve');
+    newBtn.addEventListener('click', ()=>{
       console.log('🧮 initEDO1: click en Resolver EDO');
       steps.innerHTML='';
       const s = eq.value || '';
+      console.log('📝 EDO1: ecuación ingresada:', s);
       const m = s.split('=');
-      if(m.length<2){ addStep(steps,'Formato inválido','$$ \\frac{dy}{dx}=f(x,y) $$'); return; }
+      if(m.length<2){ 
+        addStep(steps,'Formato inválido','$$ \\frac{dy}{dx}=f(x,y) $$'); 
+        return; 
+      }
       const rhs = m.slice(1).join('=').trim();
       addStep(steps,'Ecuación','$$ \\frac{dy}{dx} = '+rhs+' $$');
       
@@ -114,26 +142,41 @@
       }
     });
 
+    // Habilitar botón RK4
     if (btnRK) {
       btnRK.disabled = false;
-      btnRK.classList.remove('cursor-not-allowed');
+      btnRK.classList.remove('cursor-not-allowed', 'opacity-50');
       btnRK.style.cursor = 'pointer';
-      btnRK.addEventListener('mouseenter', ()=> btnRK.style.cursor = 'pointer');
+      btnRK.style.opacity = '1';
+      
+      // Remover listeners previos
+      btnRK.replaceWith(btnRK.cloneNode(true));
+      const newBtnRK = document.getElementById('edo1RK');
+      
+      newBtnRK.addEventListener('click', ()=>{
+        console.log('🧮 initEDO1: click en RK4');
+        steps.innerHTML='';
+        const s = eq.value || '';
+        console.log('📝 EDO1 RK4: ecuación ingresada:', s);
+        const m = s.split('='); 
+        if(m.length<2){ 
+          addStep(steps,'Formato inválido','$$ \\frac{dy}{dx}=f(x,y) $$'); 
+          return; 
+        }
+        const rhs = m.slice(1).join('=').trim();
+        try {
+          const f = (x,y)=> math.evaluate(rhs, {x, y});
+          const x0v = parseFloat(x0.value||'0');
+          const y0v = parseFloat(y0.value||'0');
+          const xfv = parseFloat(xf.value|| (x0v+1));
+          const n=20, h=(xfv-x0v)/n;
+          const pts = rk4(f,x0v,y0v,h,n);
+          addStep(steps,'Aproximación RK4','$$ y('+xfv.toFixed(2)+') \\approx '+pts[pts.length-1][1].toFixed(6)+' $$');
+        } catch(err) {
+          addStep(steps,'Error RK4','No se pudo evaluar la función: ' + err.message);
+        }
+      });
     }
-    btnRK.addEventListener('click', ()=>{
-      console.log('🧮 initEDO1: click en RK4');
-      steps.innerHTML='';
-      const s = eq.value || '';
-      const m = s.split('='); if(m.length<2){ addStep(steps,'Formato inválido','$$ \\frac{dy}{dx}=f(x,y) $$'); return; }
-      const rhs = m.slice(1).join('=').trim();
-      const f = (x,y)=> math.evaluate(rhs, {x, y});
-      const x0v = parseFloat(x0.value||'0');
-      const y0v = parseFloat(y0.value||'0');
-      const xfv = parseFloat(xf.value|| (x0v+1));
-      const n=20, h=(xfv-x0v)/n;
-      const pts = rk4(f,x0v,y0v,h,n);
-      addStep(steps,'Aproximación RK4','$$ y('+xfv.toFixed(2)+') \\approx '+pts[pts.length-1][1].toFixed(6)+' $$');
-    });
   };
 
   window.initEDO2 = function(){
@@ -141,18 +184,27 @@
     const eq = document.getElementById('edo2Eq');
     const btn = document.getElementById('edo2Solve');
     const steps = document.getElementById('edo2Steps');
-    if(!eq||!btn||!steps) return;
-    
-    if (btn) {
-      btn.disabled = false;
-      btn.classList.remove('cursor-not-allowed');
-      btn.style.cursor = 'pointer';
-      btn.addEventListener('mouseenter', ()=> btn.style.cursor = 'pointer');
+    if(!eq||!btn||!steps) {
+      console.error('❌ initEDO2: elementos no encontrados', {eq: !!eq, btn: !!btn, steps: !!steps});
+      return;
     }
-    btn.addEventListener('click', ()=>{
+
+    console.log('✅ initEDO2: elementos encontrados, habilitando botones...');
+    
+    // Habilitar botón resolver
+    btn.disabled = false;
+    btn.classList.remove('cursor-not-allowed', 'opacity-50');
+    btn.style.cursor = 'pointer';
+    btn.style.opacity = '1';
+    
+    // Remover listeners previos para evitar duplicados
+    btn.replaceWith(btn.cloneNode(true));
+    const newBtn = document.getElementById('edo2Solve');
+    newBtn.addEventListener('click', ()=>{
       console.log('🧮 initEDO2: click en Resolver EDO');
       steps.innerHTML='';
       const s = eq.value||'';
+      console.log('📝 EDO2: ecuación ingresada:', s);
       // parse simple: y'' + a*y' + b*y = 0 (solo homogénea por ahora)
       const leftRight = s.split('=');
       const left = (leftRight[0]||'').trim();
@@ -195,19 +247,28 @@
     const Ainp=document.getElementById('edosysA');
     const btn=document.getElementById('edosysSolve');
     const steps=document.getElementById('edosysSteps');
-    if(!Ainp||!btn||!steps) return;
-    
-    if (btn) {
-      btn.disabled = false;
-      btn.classList.remove('cursor-not-allowed');
-      btn.style.cursor = 'pointer';
-      btn.addEventListener('mouseenter', ()=> btn.style.cursor = 'pointer');
+    if(!Ainp||!btn||!steps) {
+      console.error('❌ initEDOSys: elementos no encontrados', {Ainp: !!Ainp, btn: !!btn, steps: !!steps});
+      return;
     }
-    btn.addEventListener('click',()=>{
+
+    console.log('✅ initEDOSys: elementos encontrados, habilitando botones...');
+    
+    // Habilitar botón resolver
+    btn.disabled = false;
+    btn.classList.remove('cursor-not-allowed', 'opacity-50');
+    btn.style.cursor = 'pointer';
+    btn.style.opacity = '1';
+    
+    // Remover listeners previos para evitar duplicados
+    btn.replaceWith(btn.cloneNode(true));
+    const newBtn = document.getElementById('edosysSolve');
+    newBtn.addEventListener('click',()=>{
       console.log('🧮 initEDOSys: click en Resolver Sistema');
       steps.innerHTML='';
       try{
         const A = JSON.parse(Ainp.value);
+        console.log('📝 EDOSys: matriz ingresada:', A);
         addStep(steps,'Matriz del sistema','$$ A = \\begin{pmatrix} '+A.map(row => row.join(' & ')).join(' \\\\ ') +' \\end{pmatrix} $$');
         
         const eig = math.eigs(math.matrix(A));
@@ -227,6 +288,7 @@
         }
         
       }catch(err){ 
+        console.error('❌ EDOSys error:', err);
         addStep(steps,'Error de formato','Verifica que la matriz esté en formato JSON válido');
         addStep(steps,'Ejemplo','$$ [[1,2],[3,4]] $$');
       }

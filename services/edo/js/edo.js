@@ -8,6 +8,100 @@
     } catch(_){}
   }
 
+  // Validadores de EDO
+  function validateEDO1(equation) {
+    if (!equation || equation.trim() === '') return false;
+    
+    // Verificar formato básico: dy/dx = ...
+    const parts = equation.split('=');
+    if (parts.length < 2) return false;
+    
+    const leftSide = parts[0].trim();
+    const rightSide = parts.slice(1).join('=').trim();
+    
+    // Verificar que el lado izquierdo contenga dy/dx
+    if (!leftSide.includes('dy/dx') && !leftSide.includes('dy') && !leftSide.includes('y\'')) {
+      return false;
+    }
+    
+    // Verificar que el lado derecho no esté vacío
+    if (rightSide === '') return false;
+    
+    // Verificar que contenga variables válidas (x, y, números, operadores básicos)
+    const validChars = /^[0-9xysin()cos()tan()ln()exp()\s\+\-\*\/\^\.\,\=\'\(\)]+$/;
+    if (!validChars.test(rightSide)) return false;
+    
+    return true;
+  }
+
+  function validateEDO2(equation) {
+    if (!equation || equation.trim() === '') return false;
+    
+    // Verificar formato: y'' + a*y' + b*y = f(x)
+    const parts = equation.split('=');
+    if (parts.length < 2) return false;
+    
+    const leftSide = parts[0].trim();
+    
+    // Verificar que contenga y'', y', y
+    if (!leftSide.includes('y\'\'') && !leftSide.includes('y\'\'\'')) return false;
+    if (!leftSide.includes('y\'') && !leftSide.includes('y\'\'')) return false;
+    if (!leftSide.includes('y')) return false;
+    
+    // Verificar coeficientes numéricos
+    const coefficientPattern = /[\+\-]?\s*\d*\.?\d*\s*\*/;
+    const matches = leftSide.match(coefficientPattern);
+    if (!matches || matches.length < 2) return false;
+    
+    return true;
+  }
+
+  function validateEDOSys(matrixInput) {
+    if (!matrixInput || matrixInput.trim() === '') return false;
+    
+    try {
+      const matrix = JSON.parse(matrixInput);
+      
+      // Verificar que sea un array
+      if (!Array.isArray(matrix)) return false;
+      
+      // Verificar que sea una matriz cuadrada
+      if (matrix.length === 0) return false;
+      const firstRowLength = matrix[0].length;
+      if (matrix.length !== firstRowLength) return false;
+      
+      // Verificar que todas las filas tengan la misma longitud
+      for (let row of matrix) {
+        if (!Array.isArray(row) || row.length !== firstRowLength) return false;
+        
+        // Verificar que todos los elementos sean números
+        for (let element of row) {
+          if (typeof element !== 'number' || isNaN(element)) return false;
+        }
+      }
+      
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updateButtonState(button, isValid) {
+    if (isValid) {
+      button.disabled = false;
+      button.classList.remove('opacity-50', 'cursor-not-allowed');
+      button.classList.add('hover:bg-indigo-700');
+      button.style.cursor = 'pointer';
+      button.style.opacity = '1';
+    } else {
+      button.disabled = true;
+      button.classList.add('opacity-50', 'cursor-not-allowed');
+      button.classList.remove('hover:bg-indigo-700');
+      button.style.cursor = 'not-allowed';
+      button.style.opacity = '0.5';
+    }
+  }
+
   function addStep(container, title, latex){
     const card = document.createElement('div');
     card.className='border-l-4 pl-3 py-3 bg-slate-50 rounded border-blue-500';
@@ -24,9 +118,19 @@
     if (input) {
       input.value = example;
       console.log('✅ EDO1: ejemplo establecido:', example);
-      // Disparar evento input para activar cualquier validación
+      // Disparar evento input para activar validación
       const event = new Event('input', { bubbles: true });
       input.dispatchEvent(event);
+      
+      // También disparar validación manualmente
+      const btn = document.getElementById('edo1Solve');
+      const btnRK = document.getElementById('edo1RK');
+      if (btn && btnRK) {
+        const isValid = validateEDO1(example);
+        updateButtonState(btn, isValid);
+        updateButtonState(btnRK, isValid);
+        console.log('🔍 EDO1 validación después del ejemplo:', isValid);
+      }
     } else {
       console.error('❌ setEDO1Example: input edo1Eq no encontrado');
     }
@@ -40,6 +144,14 @@
       console.log('✅ EDO2: ejemplo establecido:', example);
       const event = new Event('input', { bubbles: true });
       input.dispatchEvent(event);
+      
+      // Validación manual
+      const btn = document.getElementById('edo2Solve');
+      if (btn) {
+        const isValid = validateEDO2(example);
+        updateButtonState(btn, isValid);
+        console.log('🔍 EDO2 validación después del ejemplo:', isValid);
+      }
     } else {
       console.error('❌ setEDO2Example: input edo2Eq no encontrado');
     }
@@ -53,6 +165,14 @@
       console.log('✅ EDOSys: ejemplo establecido:', example);
       const event = new Event('input', { bubbles: true });
       input.dispatchEvent(event);
+      
+      // Validación manual
+      const btn = document.getElementById('edosysSolve');
+      if (btn) {
+        const isValid = validateEDOSys(example);
+        updateButtonState(btn, isValid);
+        console.log('🔍 EDOSys validación después del ejemplo:', isValid);
+      }
     } else {
       console.error('❌ setEDOSysExample: input edosysA no encontrado');
     }
@@ -87,13 +207,20 @@
       return;
     }
 
-    console.log('✅ initEDO1: elementos encontrados, habilitando botones...');
+    console.log('✅ initEDO1: elementos encontrados, configurando validación...');
     
-    // Habilitar botón resolver
-    btn.disabled = false;
-    btn.classList.remove('cursor-not-allowed', 'opacity-50');
-    btn.style.cursor = 'pointer';
-    btn.style.opacity = '1';
+    // Configurar validación en tiempo real
+    eq.addEventListener('input', () => {
+      const isValid = validateEDO1(eq.value);
+      updateButtonState(btn, isValid);
+      updateButtonState(btnRK, isValid);
+      console.log('🔍 EDO1 validación:', isValid, 'para:', eq.value);
+    });
+    
+    // Validación inicial
+    const initialValid = validateEDO1(eq.value);
+    updateButtonState(btn, initialValid);
+    updateButtonState(btnRK, initialValid);
     
     // Remover listeners previos para evitar duplicados
     btn.replaceWith(btn.cloneNode(true));
@@ -189,13 +316,18 @@
       return;
     }
 
-    console.log('✅ initEDO2: elementos encontrados, habilitando botones...');
+    console.log('✅ initEDO2: elementos encontrados, configurando validación...');
     
-    // Habilitar botón resolver
-    btn.disabled = false;
-    btn.classList.remove('cursor-not-allowed', 'opacity-50');
-    btn.style.cursor = 'pointer';
-    btn.style.opacity = '1';
+    // Configurar validación en tiempo real
+    eq.addEventListener('input', () => {
+      const isValid = validateEDO2(eq.value);
+      updateButtonState(btn, isValid);
+      console.log('🔍 EDO2 validación:', isValid, 'para:', eq.value);
+    });
+    
+    // Validación inicial
+    const initialValid = validateEDO2(eq.value);
+    updateButtonState(btn, initialValid);
     
     // Remover listeners previos para evitar duplicados
     btn.replaceWith(btn.cloneNode(true));
@@ -252,13 +384,18 @@
       return;
     }
 
-    console.log('✅ initEDOSys: elementos encontrados, habilitando botones...');
+    console.log('✅ initEDOSys: elementos encontrados, configurando validación...');
     
-    // Habilitar botón resolver
-    btn.disabled = false;
-    btn.classList.remove('cursor-not-allowed', 'opacity-50');
-    btn.style.cursor = 'pointer';
-    btn.style.opacity = '1';
+    // Configurar validación en tiempo real
+    Ainp.addEventListener('input', () => {
+      const isValid = validateEDOSys(Ainp.value);
+      updateButtonState(btn, isValid);
+      console.log('🔍 EDOSys validación:', isValid, 'para:', Ainp.value);
+    });
+    
+    // Validación inicial
+    const initialValid = validateEDOSys(Ainp.value);
+    updateButtonState(btn, initialValid);
     
     // Remover listeners previos para evitar duplicados
     btn.replaceWith(btn.cloneNode(true));

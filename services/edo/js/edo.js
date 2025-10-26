@@ -1,3 +1,129 @@
+// Funciones globales de validación
+window.validateEDO1 = function(equation) {
+  if (!equation || equation.trim() === '') return false;
+  const parts = equation.split('=');
+  if (parts.length < 2) return false;
+  const leftSide = parts[0].trim();
+  const rightSide = parts.slice(1).join('=').trim();
+  if (!leftSide.includes('dy/dx') && !leftSide.includes('dy') && !leftSide.includes('y\'')) {
+    return false;
+  }
+  if (rightSide === '') return false;
+  const validChars = /^[0-9xysin()cos()tan()ln()exp()\s\+\-\*\/\^\.\,\=\'\(\)]+$/;
+  if (!validChars.test(rightSide)) return false;
+  return true;
+};
+
+window.validateEDO2 = function(equation) {
+  if (!equation || equation.trim() === '') return false;
+  const parts = equation.split('=');
+  if (parts.length < 2) return false;
+  const leftSide = parts[0].trim();
+  if (!leftSide.includes('y\'\'') && !leftSide.includes('y\'\'\'')) return false;
+  if (!leftSide.includes('y\'') && !leftSide.includes('y\'\'')) return false;
+  if (!leftSide.includes('y')) return false;
+  const coefficientPattern = /[\+\-]?\s*\d*\.?\d*\s*\*/;
+  const matches = leftSide.match(coefficientPattern);
+  if (!matches || matches.length < 2) return false;
+  return true;
+};
+
+window.validateEDOSys = function(matrixInput) {
+  if (!matrixInput || matrixInput.trim() === '') return false;
+  try {
+    const matrix = JSON.parse(matrixInput);
+    if (!Array.isArray(matrix)) return false;
+    if (matrix.length === 0) return false;
+    const firstRowLength = matrix[0].length;
+    if (matrix.length !== firstRowLength) return false;
+    for (let row of matrix) {
+      if (!Array.isArray(row) || row.length !== firstRowLength) return false;
+      for (let element of row) {
+        if (typeof element !== 'number' || isNaN(element)) return false;
+      }
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+window.updateButtonState = function(button, isValid) {
+  if (isValid) {
+    button.disabled = false;
+    button.classList.remove('opacity-50', 'cursor-not-allowed');
+    button.classList.add('hover:bg-indigo-700');
+    button.style.cursor = 'pointer';
+    button.style.opacity = '1';
+  } else {
+    button.disabled = true;
+    button.classList.add('opacity-50', 'cursor-not-allowed');
+    button.classList.remove('hover:bg-indigo-700');
+    button.style.cursor = 'not-allowed';
+    button.style.opacity = '0.5';
+  }
+};
+
+// Funciones globales para establecer ejemplos - deben estar disponibles inmediatamente
+window.setEDO1Example = function(example) {
+  console.log('🔧 setEDO1Example llamada con:', example);
+  const input = document.getElementById('edo1Eq');
+  if (input) {
+    input.value = example;
+    console.log('✅ EDO1: ejemplo establecido:', example);
+    const event = new Event('input', { bubbles: true });
+    input.dispatchEvent(event);
+    // Actualizar estado de botones
+    const btn = document.getElementById('edo1Solve');
+    const btnRK = document.getElementById('edo1RK');
+    if (btn && btnRK) {
+      const isValid = window.validateEDO1(example);
+      window.updateButtonState(btn, isValid);
+      window.updateButtonState(btnRK, isValid);
+    }
+  } else {
+    console.error('❌ setEDO1Example: input edo1Eq no encontrado');
+  }
+};
+
+window.setEDO2Example = function(example) {
+  console.log('🔧 setEDO2Example llamada con:', example);
+  const input = document.getElementById('edo2Eq');
+  if (input) {
+    input.value = example;
+    console.log('✅ EDO2: ejemplo establecido:', example);
+    const event = new Event('input', { bubbles: true });
+    input.dispatchEvent(event);
+    // Actualizar estado de botones
+    const btn = document.getElementById('edo2Solve');
+    if (btn) {
+      const isValid = window.validateEDO2(example);
+      window.updateButtonState(btn, isValid);
+    }
+  } else {
+    console.error('❌ setEDO2Example: input edo2Eq no encontrado');
+  }
+};
+
+window.setEDOSysExample = function(example) {
+  console.log('🔧 setEDOSysExample llamada con:', example);
+  const input = document.getElementById('edosysA');
+  if (input) {
+    input.value = example;
+    console.log('✅ EDOSys: ejemplo establecido:', example);
+    const event = new Event('input', { bubbles: true });
+    input.dispatchEvent(event);
+    // Actualizar estado de botones
+    const btn = document.getElementById('edosysSolve');
+    if (btn) {
+      const isValid = window.validateEDOSys(example);
+      window.updateButtonState(btn, isValid);
+    }
+  } else {
+    console.error('❌ setEDOSysExample: input edosysA no encontrado');
+  }
+};
+
 (function(){
   function typeset(el){
     try {
@@ -6,100 +132,6 @@
       }
       if (window.MathJax && window.MathJax.typesetPromise) { window.MathJax.typesetPromise([el]).catch(()=>{}); }
     } catch(_){}
-  }
-
-  // Validadores de EDO
-  function validateEDO1(equation) {
-    if (!equation || equation.trim() === '') return false;
-    
-    // Verificar formato básico: dy/dx = ...
-    const parts = equation.split('=');
-    if (parts.length < 2) return false;
-    
-    const leftSide = parts[0].trim();
-    const rightSide = parts.slice(1).join('=').trim();
-    
-    // Verificar que el lado izquierdo contenga dy/dx
-    if (!leftSide.includes('dy/dx') && !leftSide.includes('dy') && !leftSide.includes('y\'')) {
-      return false;
-    }
-    
-    // Verificar que el lado derecho no esté vacío
-    if (rightSide === '') return false;
-    
-    // Verificar que contenga variables válidas (x, y, números, operadores básicos)
-    const validChars = /^[0-9xysin()cos()tan()ln()exp()\s\+\-\*\/\^\.\,\=\'\(\)]+$/;
-    if (!validChars.test(rightSide)) return false;
-    
-    return true;
-  }
-
-  function validateEDO2(equation) {
-    if (!equation || equation.trim() === '') return false;
-    
-    // Verificar formato: y'' + a*y' + b*y = f(x)
-    const parts = equation.split('=');
-    if (parts.length < 2) return false;
-    
-    const leftSide = parts[0].trim();
-    
-    // Verificar que contenga y'', y', y
-    if (!leftSide.includes('y\'\'') && !leftSide.includes('y\'\'\'')) return false;
-    if (!leftSide.includes('y\'') && !leftSide.includes('y\'\'')) return false;
-    if (!leftSide.includes('y')) return false;
-    
-    // Verificar coeficientes numéricos
-    const coefficientPattern = /[\+\-]?\s*\d*\.?\d*\s*\*/;
-    const matches = leftSide.match(coefficientPattern);
-    if (!matches || matches.length < 2) return false;
-    
-    return true;
-  }
-
-  function validateEDOSys(matrixInput) {
-    if (!matrixInput || matrixInput.trim() === '') return false;
-    
-    try {
-      const matrix = JSON.parse(matrixInput);
-      
-      // Verificar que sea un array
-      if (!Array.isArray(matrix)) return false;
-      
-      // Verificar que sea una matriz cuadrada
-      if (matrix.length === 0) return false;
-      const firstRowLength = matrix[0].length;
-      if (matrix.length !== firstRowLength) return false;
-      
-      // Verificar que todas las filas tengan la misma longitud
-      for (let row of matrix) {
-        if (!Array.isArray(row) || row.length !== firstRowLength) return false;
-        
-        // Verificar que todos los elementos sean números
-        for (let element of row) {
-          if (typeof element !== 'number' || isNaN(element)) return false;
-        }
-      }
-      
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function updateButtonState(button, isValid) {
-    if (isValid) {
-      button.disabled = false;
-      button.classList.remove('opacity-50', 'cursor-not-allowed');
-      button.classList.add('hover:bg-indigo-700');
-      button.style.cursor = 'pointer';
-      button.style.opacity = '1';
-    } else {
-      button.disabled = true;
-      button.classList.add('opacity-50', 'cursor-not-allowed');
-      button.classList.remove('hover:bg-indigo-700');
-      button.style.cursor = 'not-allowed';
-      button.style.opacity = '0.5';
-    }
   }
 
   function addStep(container, title, latex){
@@ -111,72 +143,31 @@
     typeset(card);
   }
 
-  // Funciones para establecer ejemplos
-  window.setEDO1Example = function(example) {
-    console.log('🔧 setEDO1Example llamada con:', example);
-    const input = document.getElementById('edo1Eq');
-    if (input) {
-      input.value = example;
-      console.log('✅ EDO1: ejemplo establecido:', example);
-      // Disparar evento input para activar validación
-      const event = new Event('input', { bubbles: true });
-      input.dispatchEvent(event);
-      
-      // También disparar validación manualmente
-      const btn = document.getElementById('edo1Solve');
-      const btnRK = document.getElementById('edo1RK');
-      if (btn && btnRK) {
-        const isValid = validateEDO1(example);
-        updateButtonState(btn, isValid);
-        updateButtonState(btnRK, isValid);
-        console.log('🔍 EDO1 validación después del ejemplo:', isValid);
-      }
-    } else {
-      console.error('❌ setEDO1Example: input edo1Eq no encontrado');
+  // Función de sanitización para expresiones matemáticas
+  function sanitizeMathExpression(expr) {
+    if (!expr || typeof expr !== 'string') return null;
+    
+    // Verificar longitud máxima
+    if (expr.length > 200) {
+      throw new Error('Expresión demasiado larga (máx 200 caracteres)');
     }
-  };
-
-  window.setEDO2Example = function(example) {
-    console.log('🔧 setEDO2Example llamada con:', example);
-    const input = document.getElementById('edo2Eq');
-    if (input) {
-      input.value = example;
-      console.log('✅ EDO2: ejemplo establecido:', example);
-      const event = new Event('input', { bubbles: true });
-      input.dispatchEvent(event);
-      
-      // Validación manual
-      const btn = document.getElementById('edo2Solve');
-      if (btn) {
-        const isValid = validateEDO2(example);
-        updateButtonState(btn, isValid);
-        console.log('🔍 EDO2 validación después del ejemplo:', isValid);
-      }
-    } else {
-      console.error('❌ setEDO2Example: input edo2Eq no encontrado');
+    
+    // Permitir solo caracteres válidos para expresiones matemáticas
+    const allowedChars = /^[0-9xysin()cos()tan()log()exp()sqrt()abs()\s\+\-\*\/\^\.\,\'\"\(\)]+$/;
+    if (!allowedChars.test(expr)) {
+      throw new Error('Expresión contiene caracteres no permitidos');
     }
-  };
-
-  window.setEDOSysExample = function(example) {
-    console.log('🔧 setEDOSysExample llamada con:', example);
-    const input = document.getElementById('edosysA');
-    if (input) {
-      input.value = example;
-      console.log('✅ EDOSys: ejemplo establecido:', example);
-      const event = new Event('input', { bubbles: true });
-      input.dispatchEvent(event);
-      
-      // Validación manual
-      const btn = document.getElementById('edosysSolve');
-      if (btn) {
-        const isValid = validateEDOSys(example);
-        updateButtonState(btn, isValid);
-        console.log('🔍 EDOSys validación después del ejemplo:', isValid);
+    
+    // Detectar palabras peligrosas
+    const dangerous = ['eval', 'Function', 'constructor', 'apply', 'call', 'document', 'window', 'innerHTML'];
+    for (let pattern of dangerous) {
+      if (expr.toLowerCase().includes(pattern.toLowerCase())) {
+        throw new Error(`Expresión contiene '${pattern}' que no está permitido`);
       }
-    } else {
-      console.error('❌ setEDOSysExample: input edosysA no encontrado');
     }
-  };
+    
+    return expr;
+  }
 
   // RK4 simple para y' = f(x,y)
   function rk4(f, x0, y0, h, n){
@@ -209,22 +200,22 @@
 
     console.log('✅ initEDO1: elementos encontrados, configurando validación...');
     
-    // Configurar validación en tiempo real
+    // Reemplazar botones primero para limpiar listeners anteriores
+    btn.replaceWith(btn.cloneNode(true));
+    const newBtn = document.getElementById('edo1Solve');
+    
+    // Agregar event listeners DESPUÉS del reemplazo
     eq.addEventListener('input', () => {
-      const isValid = validateEDO1(eq.value);
-      updateButtonState(btn, isValid);
-      updateButtonState(btnRK, isValid);
+      const isValid = window.validateEDO1(eq.value);
+      window.updateButtonState(newBtn, isValid);
+      if (btnRK) window.updateButtonState(btnRK, isValid);
       console.log('🔍 EDO1 validación:', isValid, 'para:', eq.value);
     });
     
-    // Validación inicial
-    const initialValid = validateEDO1(eq.value);
-    updateButtonState(btn, initialValid);
-    updateButtonState(btnRK, initialValid);
-    
-    // Remover listeners previos para evitar duplicados
-    btn.replaceWith(btn.cloneNode(true));
-    const newBtn = document.getElementById('edo1Solve');
+    // Configurar estado inicial
+    const initialValid = window.validateEDO1(eq.value);
+    window.updateButtonState(newBtn, initialValid);
+    if (btnRK) window.updateButtonState(btnRK, initialValid);
     newBtn.addEventListener('click', ()=>{
       console.log('🧮 initEDO1: click en Resolver EDO');
       steps.innerHTML='';
@@ -238,29 +229,23 @@
       const rhs = m.slice(1).join('=').trim();
       addStep(steps,'Ecuación','$$ \\frac{dy}{dx} = '+rhs+' $$');
       
-      // Intentar resolver casos específicos
       try {
         if (rhs.includes('*') && rhs.includes('x') && rhs.includes('y')) {
-          // Caso separable: dy/dx = x*y
           addStep(steps,'Separación de variables','$$ \\frac{dy}{y} = x \\, dx $$');
           addStep(steps,'Integración','$$ \\ln|y| = \\frac{x^2}{2} + C $$');
           addStep(steps,'Solución general','$$ y(x) = C e^{\\frac{x^2}{2}} $$');
         } else if (rhs.includes('x + y')) {
-          // Caso lineal: dy/dx = x + y
           addStep(steps,'Ecuación lineal','$$ \\frac{dy}{dx} - y = x $$');
           addStep(steps,'Factor integrante','$$ \\mu(x) = e^{-x} $$');
           addStep(steps,'Solución general','$$ y(x) = C e^x - x - 1 $$');
         } else if (rhs.includes('y^2')) {
-          // Caso no lineal: dy/dx = y^2
           addStep(steps,'Separación de variables','$$ \\frac{dy}{y^2} = dx $$');
           addStep(steps,'Integración','$$ -\\frac{1}{y} = x + C $$');
           addStep(steps,'Solución general','$$ y(x) = -\\frac{1}{x + C} $$');
         } else if (rhs.includes('sin(x)')) {
-          // Caso trigonométrico: dy/dx = sin(x)
           addStep(steps,'Integración directa','$$ y = \\int \\sin(x) \\, dx $$');
           addStep(steps,'Solución general','$$ y(x) = -\\cos(x) + C $$');
         } else {
-          // Caso general
           addStep(steps,'Forma general','$$ dy = ('+rhs+')\\,dx $$');
           addStep(steps,'Solución general (formal)','$$ y(x) = \\int ('+rhs+')\\,dx $$');
         }
@@ -269,16 +254,16 @@
       }
     });
 
-    // Habilitar botón RK4
     if (btnRK) {
-      btnRK.disabled = false;
-      btnRK.classList.remove('cursor-not-allowed', 'opacity-50');
-      btnRK.style.cursor = 'pointer';
-      btnRK.style.opacity = '1';
-      
-      // Remover listeners previos
+      // Reemplazar botón RK primero
       btnRK.replaceWith(btnRK.cloneNode(true));
       const newBtnRK = document.getElementById('edo1RK');
+      
+      // Configurar estado del botón RK
+      newBtnRK.disabled = false;
+      newBtnRK.classList.remove('cursor-not-allowed', 'opacity-50');
+      newBtnRK.style.cursor = 'pointer';
+      newBtnRK.style.opacity = '1';
       
       newBtnRK.addEventListener('click', ()=>{
         console.log('🧮 initEDO1: click en RK4');
@@ -292,7 +277,13 @@
         }
         const rhs = m.slice(1).join('=').trim();
         try {
-          const f = (x,y)=> math.evaluate(rhs, {x, y});
+          // Sanitizar antes de evaluar
+          const sanitizedRhs = sanitizeMathExpression(rhs);
+          if (!sanitizedRhs) {
+            throw new Error('Expresión vacía o inválida');
+          }
+          
+          const f = (x,y)=> math.evaluate(sanitizedRhs, {x, y});
           const x0v = parseFloat(x0.value||'0');
           const y0v = parseFloat(y0.value||'0');
           const xfv = parseFloat(xf.value|| (x0v+1));
@@ -301,6 +292,7 @@
           addStep(steps,'Aproximación RK4','$$ y('+xfv.toFixed(2)+') \\approx '+pts[pts.length-1][1].toFixed(6)+' $$');
         } catch(err) {
           addStep(steps,'Error RK4','No se pudo evaluar la función: ' + err.message);
+          console.error('Error en RK4:', err);
         }
       });
     }
@@ -318,40 +310,38 @@
 
     console.log('✅ initEDO2: elementos encontrados, configurando validación...');
     
-    // Configurar validación en tiempo real
+    // Reemplazar botón primero para limpiar listeners anteriores
+    btn.replaceWith(btn.cloneNode(true));
+    const newBtn = document.getElementById('edo2Solve');
+    
+    // Agregar event listeners DESPUÉS del reemplazo
     eq.addEventListener('input', () => {
-      const isValid = validateEDO2(eq.value);
-      updateButtonState(btn, isValid);
+      const isValid = window.validateEDO2(eq.value);
+      window.updateButtonState(newBtn, isValid);
       console.log('🔍 EDO2 validación:', isValid, 'para:', eq.value);
     });
     
-    // Validación inicial
-    const initialValid = validateEDO2(eq.value);
-    updateButtonState(btn, initialValid);
-    
-    // Remover listeners previos para evitar duplicados
-    btn.replaceWith(btn.cloneNode(true));
-    const newBtn = document.getElementById('edo2Solve');
+    // Configurar estado inicial
+    const initialValid = window.validateEDO2(eq.value);
+    window.updateButtonState(newBtn, initialValid);
     newBtn.addEventListener('click', ()=>{
       console.log('🧮 initEDO2: click en Resolver EDO');
       steps.innerHTML='';
       const s = eq.value||'';
       console.log('📝 EDO2: ecuación ingresada:', s);
-      // parse simple: y'' + a*y' + b*y = 0 (solo homogénea por ahora)
       const leftRight = s.split('=');
       const left = (leftRight[0]||'').trim();
       
-      // Mejorar el regex para capturar más casos
-      const match = left.match(/y''\s*\+\s*([\-0-9\.]+)\s*\*\s*y'\s*\+\s*([\-0-9\.]+)\s*\*\s*y/);
+      const match = left.match(/y''\s*\+\s*([\-0-9\.]+)\s*\*?\s*y'\s*\+\s*([\-0-9\.]+)\s*\*?\s*y/);
       if(!match){ 
-        addStep(steps,'Formato esperado','$$ y'' + a y' + b y = f(x) $$');
-        addStep(steps,'Ejemplo','$$ y'' + 3*y' + 2*y = 0 $$');
+        addStep(steps,'Formato esperado',"$$ y'' + ay' + by = f(x) $$");
+        addStep(steps,'Ejemplo',"$$ y'' + 2y' + 2y = 0 $$");
         return; 
       }
       const a=parseFloat(match[1]);
       const b=parseFloat(match[2]);
       
-      addStep(steps,'Ecuación','$$ y'' + '+a+' y' + '+b+' y = 0 $$');
+      addStep(steps,'Ecuación',"$$ y'' + "+a+" y' + "+b+" y = 0 $$");
       addStep(steps,'Polinomio característico','$$ r^2 + '+a+' r + '+b+' = 0 $$');
       
       const D=a*a-4*b;
@@ -386,42 +376,99 @@
 
     console.log('✅ initEDOSys: elementos encontrados, configurando validación...');
     
-    // Configurar validación en tiempo real
+    // Configurar event listeners para botones de ejemplo
+    const exampleButtons = document.querySelectorAll('.edosys-example-btn');
+    exampleButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const example = button.getAttribute('data-example');
+        if (example) {
+          window.setEDOSysExample(example);
+        }
+      });
+    });
+    
+    // Reemplazar botón primero para limpiar listeners anteriores
+    btn.replaceWith(btn.cloneNode(true));
+    const newBtn = document.getElementById('edosysSolve');
+    
+    // Agregar event listeners DESPUÉS del reemplazo
     Ainp.addEventListener('input', () => {
-      const isValid = validateEDOSys(Ainp.value);
-      updateButtonState(btn, isValid);
+      const isValid = window.validateEDOSys(Ainp.value);
+      window.updateButtonState(newBtn, isValid);
       console.log('🔍 EDOSys validación:', isValid, 'para:', Ainp.value);
     });
     
-    // Validación inicial
-    const initialValid = validateEDOSys(Ainp.value);
-    updateButtonState(btn, initialValid);
-    
-    // Remover listeners previos para evitar duplicados
-    btn.replaceWith(btn.cloneNode(true));
-    const newBtn = document.getElementById('edosysSolve');
+    // Configurar estado inicial
+    const initialValid = window.validateEDOSys(Ainp.value);
+    window.updateButtonState(newBtn, initialValid);
     newBtn.addEventListener('click',()=>{
       console.log('🧮 initEDOSys: click en Resolver Sistema');
       steps.innerHTML='';
+      
+      if (typeof math === 'undefined') {
+        console.error('❌ MathJS no está disponible');
+        addStep(steps,'Error','MathJS no está disponible. Recarga la página.');
+        return;
+      }
+      
       try{
         const A = JSON.parse(Ainp.value);
         console.log('📝 EDOSys: matriz ingresada:', A);
-        addStep(steps,'Matriz del sistema','$$ A = \\begin{pmatrix} '+A.map(row => row.join(' & ')).join(' \\\\ ') +' \\end{pmatrix} $$');
         
-        const eig = math.eigs(math.matrix(A));
-        addStep(steps,'Autovalores','$$ \\lambda = '+JSON.stringify(eig.values)+' $$');
-        
-        // Mostrar autovectores si están disponibles
-        if (eig.vectors) {
-          addStep(steps,'Autovectores','$$ \\mathbf{v} = \\begin{pmatrix} '+eig.vectors.map(col => col.join(' \\\\ ')).join(' \\end{pmatrix}, \\begin{pmatrix} ') +' \\end{pmatrix} $$');
+        if (!Array.isArray(A) || A.length === 0) {
+          throw new Error('La matriz debe ser un array no vacío');
         }
         
-        addStep(steps,'Solución general','$$ \\mathbf{Y}(x) = e^{Ax} \\mathbf{C} $$');
-        addStep(steps,'Donde','$$ \\mathbf{C} = \\begin{pmatrix} C_1 \\\\ C_2 \\end{pmatrix} $$');
+        addStep(steps,'Matriz del sistema','$$ A = \\begin{pmatrix} '+A.map(row => row.join(' & ')).join(' \\\\ ') +' \\end{pmatrix} $$');
         
-        // Si es diagonalizable, mostrar forma explícita
-        if (A.length === 2 && A[0][1] === 0 && A[1][0] === 0) {
-          addStep(steps,'Caso diagonal','$$ \\mathbf{Y}(x) = \\begin{pmatrix} C_1 e^{'+A[0][0]+'x} \\\\ C_2 e^{'+A[1][1]+'x} \\end{pmatrix} $$');
+        try {
+          const matrixA = math.matrix(A);
+          console.log('🔍 Calculando autovalores de la matriz...');
+          
+          if (typeof math.eigs !== 'function') {
+            if (A.length === 2 && A[0].length === 2) {
+              const a = A[0][0], b = A[0][1], c = A[1][0], d = A[1][1];
+              const trace = a + d;
+              const det = a*d - b*c;
+              const discriminant = trace*trace - 4*det;
+              
+              addStep(steps,'Cálculo manual','$$ \\text{tr}(A) = '+trace+', \\ \\det(A) = '+det+' $$');
+              
+              if (discriminant > 0) {
+                const lambda1 = (trace + Math.sqrt(discriminant))/2;
+                const lambda2 = (trace - Math.sqrt(discriminant))/2;
+                addStep(steps,'Autovalores','$$ \\lambda_1 = '+lambda1.toFixed(4)+', \\ \\lambda_2 = '+lambda2.toFixed(4)+' $$');
+              } else if (discriminant === 0) {
+                const lambda = trace/2;
+                addStep(steps,'Raíz doble','$$ \\lambda = '+lambda.toFixed(4)+' $$');
+              } else {
+                const real = trace/2;
+                const imag = Math.sqrt(-discriminant)/2;
+                addStep(steps,'Autovalores complejos','$$ \\lambda = '+real.toFixed(4)+' \\pm '+imag.toFixed(4)+'i $$');
+              }
+            } else {
+              addStep(steps,'Nota','Autovalores solo disponibles para matrices 2x2');
+            }
+          } else {
+            const eig = math.eigs(matrixA);
+            console.log('✅ Autovalores calculados:', eig);
+            
+            addStep(steps,'Autovalores','$$ \\lambda = '+JSON.stringify(eig.values)+' $$');
+            
+            if (eig.vectors) {
+              addStep(steps,'Autovectores','$$ \\mathbf{v} = \\begin{pmatrix} '+eig.vectors.map(col => col.join(' \\\\ ')).join(' \\end{pmatrix}, \\begin{pmatrix} ') +' \\end{pmatrix} $$');
+            }
+          }
+          
+          addStep(steps,'Solución general','$$ \\mathbf{Y}(x) = e^{Ax} \\mathbf{C} $$');
+          addStep(steps,'Donde','$$ \\mathbf{C} = \\begin{pmatrix} C_1 \\\\ C_2 \\end{pmatrix} $$');
+          
+          if (A.length === 2 && A[0][1] === 0 && A[1][0] === 0) {
+            addStep(steps,'Caso diagonal','$$ \\mathbf{Y}(x) = \\begin{pmatrix} C_1 e^{'+A[0][0]+'x} \\\\ C_2 e^{'+A[1][1]+'x} \\end{pmatrix} $$');
+          }
+        } catch (eigError) {
+          console.error('❌ Error calculando autovalores:', eigError);
+          addStep(steps,'Error','No se pudieron calcular autovalores: ' + eigError.message);
         }
         
       }catch(err){ 

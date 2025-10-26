@@ -28,6 +28,10 @@
   <script defer src="services/determinantes/js/script.js"></script>
   <!-- Carga global del JS de EDO -->
   <script defer src="services/edo/js/edo.js"></script>
+  <!-- Calculadoras EDO separadas -->
+  <script defer src="services/edo/js/edo1.js"></script>
+  <script defer src="services/edo/js/edo2.js"></script>
+  <script defer src="services/edo/js/edosys.js"></script>
 
   <script>
     window.MathJax = {
@@ -259,7 +263,9 @@
       document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('bg-blue-100', 'text-blue-600'));
       button.classList.add('bg-blue-100', 'text-blue-600');
 
-      fetch(path)
+      // Añadir timestamp para evitar caché
+      const url = path + '?v=' + Date.now();
+      fetch(url)
         .then(res => res.text())
         .then(html => {
           const content = document.getElementById('content');
@@ -275,17 +281,21 @@
             MathJax.typesetPromise();
           }
           
-          // Renderizar KaTeX si está disponible
+          // Renderizar KaTeX solo en el contenido cargado (no todo el body)
           if (window.renderMathInElement) {
-            window.renderMathInElement(document.body, {
-              delimiters: [
-                {left: '$$', right: '$$', display: true},
-                {left: '$', right: '$', display: false},
-                {left: '\\(', right: '\\)', display: false},
-                {left: '\\[', right: '\\]', display: true}
-              ],
-              throwOnError: false
-            });
+            try {
+              window.renderMathInElement(content, {
+                delimiters: [
+                  {left: '$$', right: '$$', display: true},
+                  {left: '$', right: '$', display: false},
+                  {left: '\\(', right: '\\)', display: false},
+                  {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+              });
+            } catch(e) {
+              console.warn('Error renderizando KaTeX en content:', e);
+            }
           }
 
           // 👉 Inicializa las calculadoras según el contenido cargado
@@ -377,7 +387,10 @@
             }
             if (edosysContainer && typeof window.initEDOSys === 'function') {
               console.log('🚀 Inicializando calculadora sistemas EDO...');
-              window.initEDOSys();
+              // Esperar un poco más para asegurar que el DOM esté completamente listo
+              setTimeout(() => {
+                window.initEDOSys();
+              }, 150);
             }
           };
           
